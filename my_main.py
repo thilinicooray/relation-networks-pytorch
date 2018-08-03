@@ -17,10 +17,10 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     print_freq = 50
     dev_score_list = []
 
-    '''ngpus = 2
+    ngpus = 2
     device_array = [i for i in range(0,ngpus)]
 
-    pmodel = torch.nn.DataParallel(model, device_ids=device_array)'''
+    pmodel = torch.nn.DataParallel(model, device_ids=device_array)
 
     if scheduler.get_lr()[0] < lr_max:
         scheduler.step()
@@ -55,7 +55,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             optimizer.zero_grad()
 
-            verb_predict, role_predict = model(img, verb, roles)
+            verb_predict, role_predict = pmodel(img, verb, roles)
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
