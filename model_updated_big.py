@@ -180,7 +180,7 @@ class RelationNetworks(nn.Module):
         f = self.f(g)
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-        print('ffffff', f.size())
+        #print('ffffff', f.size())
 
         return verb_pred, role_predict
 
