@@ -43,7 +43,7 @@ class RelationNetworks(nn.Module):
             encoder,
             conv_hidden=24,
             embed_hidden=256,
-            lstm_hidden=512,
+            lstm_hidden=256,
             mlp_hidden=512
     ):
         super().__init__()
@@ -168,7 +168,7 @@ class RelationNetworks(nn.Module):
         conv = conv.repeat(1,self.max_role_count, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
-        #print('after view', conv.size())
+        print('after view', conv.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
         n_channel += 2
         conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
