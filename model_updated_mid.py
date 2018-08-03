@@ -189,7 +189,7 @@ class RelationNetworks(nn.Module):
         #print('size :', conv2.size())
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
         g = self.g(concat_vec)
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*2).sum(1).squeeze()
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
 
         f = self.f(g)
 
