@@ -119,7 +119,7 @@ class RelationNetworks(nn.Module):
             nn.Linear(mlp_hidden, mlp_hidden*4),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*2, self.vocab_size + 1),
+            nn.Linear(mlp_hidden*4, self.vocab_size),
         )
 
         self.conv_hidden = 24
@@ -193,7 +193,7 @@ class RelationNetworks(nn.Module):
 
         f = self.f(g)
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
         #print('ffffff', f.size())
 
         return verb_pred, role_predict
