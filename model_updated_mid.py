@@ -109,17 +109,17 @@ class RelationNetworks(nn.Module):
             nn.ReLU(),
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
         )
 
         self.f = nn.Sequential(
             #nn.Linear(mlp_hidden, mlp_hidden),
             #nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*4),
+            nn.Linear(mlp_hidden*2, mlp_hidden*8),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*4, self.vocab_size),
+            nn.Linear(mlp_hidden*8, self.vocab_size),
         )
 
         self.conv_hidden = 24
@@ -161,13 +161,13 @@ class RelationNetworks(nn.Module):
         role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
         #new batch size = batch_size*max_role
         batch_size_updated = role_verb_embd.size(0)
-        print('new', batch_size_updated, n_pair, role_verb_embd.size())
+        #print('new', batch_size_updated, n_pair, role_verb_embd.size())
 
         qst = torch.unsqueeze(role_verb_embd, 1)
         qst = qst.repeat(1,n_pair * n_pair,1)
         qst = torch.squeeze(qst)
 
-        print('qst size', qst.size())
+        #print('qst size', qst.size())
 
         '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
             batch_size_updated, n_pair * n_pair, self.lstm_hidden
@@ -178,7 +178,7 @@ class RelationNetworks(nn.Module):
         conv = conv.repeat(1,self.max_role_count, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
-        print('after view', conv.size(), self.coords.size())
+        #print('after view', conv.size(), self.coords.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
         n_channel += 2
         conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
@@ -189,7 +189,7 @@ class RelationNetworks(nn.Module):
         #print('size :', conv2.size())
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
         g = self.g(concat_vec)
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*2).sum(1).squeeze()
 
         f = self.f(g)
 
