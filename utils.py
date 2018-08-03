@@ -116,7 +116,7 @@ def cross_entropy_loss(pred, target, ignore_index=None):
     _x_class = - pred[target]
     denom = torch.log(torch.sum(torch.exp(pred)))
 
-    print('target :', target, _x_class, denom)
+    #print('target :', target, _x_class, denom)
 
     loss = _x_class + denom
     #print('single loss ', loss)
