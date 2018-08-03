@@ -200,7 +200,7 @@ def main():
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
-    n_worker = 9
+    n_worker = 3
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
