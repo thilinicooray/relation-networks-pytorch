@@ -161,13 +161,13 @@ class RelationNetworks(nn.Module):
         role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
         #new batch size = batch_size*max_role
         batch_size_updated = role_verb_embd.size(0)
-        #print('new', batch_size_updated, n_pair, role_verb_embd.size())
+        print('new', batch_size_updated, n_pair, role_verb_embd.size())
 
         qst = torch.unsqueeze(role_verb_embd, 1)
         qst = qst.repeat(1,n_pair * n_pair,1)
         qst = torch.squeeze(qst)
 
-        #print('qst size', qst.size())
+        print('qst size', qst.size())
 
         '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
             batch_size_updated, n_pair * n_pair, self.lstm_hidden
@@ -178,7 +178,7 @@ class RelationNetworks(nn.Module):
         conv = conv.repeat(1,self.max_role_count, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
-        #print('after view', conv.size())
+        print('after view', conv.size(), self.coords.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
         n_channel += 2
         conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
