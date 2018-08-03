@@ -180,7 +180,7 @@ class RelationNetworks(nn.Module):
         f = self.f(g)
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-        #print('ffffff', f.size())
+        print('ffffff', f.size())
 
         return verb_pred, role_predict
 
@@ -200,5 +200,5 @@ class RelationNetworks(nn.Module):
 
 
         final_loss = loss/batch_size
-        #print('loss :', final_loss)
+        print('loss :', final_loss)
         return final_loss
