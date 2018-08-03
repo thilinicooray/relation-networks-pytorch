@@ -51,16 +51,16 @@ class RelationNetworks(nn.Module):
         self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         self.train_transform = tv.transforms.Compose([
-            tv.transforms.Resize(224),
-            tv.transforms.RandomCrop(224),
-            tv.transforms.RandomHorizontalFlip(),
+            tv.transforms.Resize(128),
+            tv.transforms.Pad(8),
+            tv.transforms.RandomCrop([128, 128]),
+            tv.transforms.RandomRotation(2.8),
             tv.transforms.ToTensor(),
             self.normalize,
         ])
 
         self.dev_transform = tv.transforms.Compose([
-            tv.transforms.Resize(224),
-            tv.transforms.CenterCrop(224),
+            tv.transforms.Resize(128),
             tv.transforms.ToTensor(),
             self.normalize,
         ])
