@@ -42,7 +42,7 @@ class RelationNetworks(nn.Module):
             self,
             encoder,
             conv_hidden=24,
-            embed_hidden=512,
+            embed_hidden=256,
             lstm_hidden=512,
             mlp_hidden=1024
     ):
@@ -100,7 +100,7 @@ class RelationNetworks(nn.Module):
         self.verb_lookup = nn.Embedding(self.n_verbs, embed_hidden)
 
 
-        self.n_concat = self.conv.base_size() * 2 + embed_hidden + 2 * 2
+        self.n_concat = 24 * 2 + embed_hidden + 2 * 2
 
         self.g = nn.Sequential(
             nn.Linear(self.n_concat, mlp_hidden),
