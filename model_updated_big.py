@@ -200,5 +200,5 @@ class RelationNetworks(nn.Module):
 
 
         final_loss = loss/batch_size
-        print('loss :', final_loss)
+        #print('loss :', final_loss)
         return final_loss
