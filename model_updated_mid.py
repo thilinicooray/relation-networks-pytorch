@@ -44,7 +44,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=256,
             lstm_hidden=256,
-            mlp_hidden=1024
+            mlp_hidden=512
     ):
         super().__init__()
 
@@ -107,19 +107,19 @@ class RelationNetworks(nn.Module):
             #nn.ReLU(),
             #nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden*2, mlp_hidden*2),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
         )
 
         self.f = nn.Sequential(
-            nn.Linear(mlp_hidden*2, mlp_hidden*4),
-            nn.ReLU(),
-            nn.Linear(mlp_hidden*4, mlp_hidden*4),
+            #nn.Linear(mlp_hidden, mlp_hidden),
+            #nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden*4),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*4, self.vocab_size + 1),
+            nn.Linear(mlp_hidden*2, self.vocab_size + 1),
         )
 
         self.conv_hidden = 24
