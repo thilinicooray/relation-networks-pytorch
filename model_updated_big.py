@@ -42,9 +42,9 @@ class RelationNetworks(nn.Module):
             self,
             encoder,
             conv_hidden=24,
-            embed_hidden=256,
-            lstm_hidden=256,
-            mlp_hidden=512
+            embed_hidden=512,
+            lstm_hidden=512,
+            mlp_hidden=1024
     ):
         super().__init__()
 
@@ -76,8 +76,8 @@ class RelationNetworks(nn.Module):
         self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
             nn.ReLU(),
-            #nn.Linear(mlp_hidden, mlp_hidden),
-            #nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden, self.n_verbs),
         )
@@ -91,21 +91,21 @@ class RelationNetworks(nn.Module):
         self.g = nn.Sequential(
             nn.Linear(self.n_concat, mlp_hidden),
             nn.ReLU(),
-            #nn.Linear(mlp_hidden, mlp_hidden),
-            #nn.ReLU(),
-            #nn.Linear(mlp_hidden, mlp_hidden*2),
-            #nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.ReLU(),
             nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.ReLU(),
+            nn.Linear(mlp_hidden*2, mlp_hidden*4),
             nn.ReLU(),
         )
 
         self.f = nn.Sequential(
-            nn.Linear(mlp_hidden*2, mlp_hidden*4),
+            nn.Linear(mlp_hidden*4, mlp_hidden*4),
             nn.ReLU(),
-            #nn.Linear(mlp_hidden*4, mlp_hidden*4),
-            #nn.ReLU(),
+            nn.Linear(mlp_hidden*4, mlp_hidden*2),
+            nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*4, self.vocab_size + 1),
+            nn.Linear(mlp_hidden*2, self.vocab_size + 1),
         )
 
         self.conv_hidden = self.conv.base_size()
@@ -134,15 +134,11 @@ class RelationNetworks(nn.Module):
         #verb pred
         verb_pred = self.verb(conv.view(-1, 7*7*self.conv.base_size()))
 
-        #print('verb pred done')
-
         batch_size, n_channel, conv_h, conv_w = conv.size()
         n_pair = conv_h * conv_w
 
         verb_embd = self.verb_lookup(verbs)
         role_embd = self.role_lookup(roles)
-
-        #print('embed retrieval done')
 
         role_embed_reshaped = role_embd.transpose(0,1)
         verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
@@ -178,15 +174,13 @@ class RelationNetworks(nn.Module):
         conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
         #print('size :', conv2.size())
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-        print('concat all done')
         g = self.g(concat_vec)
-        #print('g done')
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*2).sum(1).squeeze()
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
 
         f = self.f(g)
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
-        #print('ff doneee')
+        #print('ffffff', f.size())
 
         return verb_pred, role_predict
 
