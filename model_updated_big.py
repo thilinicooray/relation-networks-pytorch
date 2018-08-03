@@ -134,7 +134,7 @@ class RelationNetworks(nn.Module):
         #verb pred
         verb_pred = self.verb(conv.view(-1, 7*7*self.conv.base_size()))
 
-        print('verb pred done')
+        #print('verb pred done')
 
         batch_size, n_channel, conv_h, conv_w = conv.size()
         n_pair = conv_h * conv_w
@@ -142,7 +142,7 @@ class RelationNetworks(nn.Module):
         verb_embd = self.verb_lookup(verbs)
         role_embd = self.role_lookup(roles)
 
-        print('embed retrieval done')
+        #print('embed retrieval done')
 
         role_embed_reshaped = role_embd.transpose(0,1)
         verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
@@ -168,7 +168,7 @@ class RelationNetworks(nn.Module):
         conv = conv.repeat(1,self.max_role_count, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
-        print('after view', conv.size())
+        #print('after view', conv.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
         n_channel += 2
         conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
@@ -180,13 +180,13 @@ class RelationNetworks(nn.Module):
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
         print('concat all done')
         g = self.g(concat_vec)
-        print('g done')
+        #print('g done')
         g = g.view(-1, n_pair * n_pair, self.mlp_hidden*2).sum(1).squeeze()
 
         f = self.f(g)
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
-        print('ff doneee')
+        #print('ff doneee')
 
         return verb_pred, role_predict
 
