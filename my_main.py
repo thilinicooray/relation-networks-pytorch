@@ -3,7 +3,7 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_updated_big
+import model_updated
 import os
 import utils
 #from torchviz import make_dot
@@ -16,6 +16,11 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     total_steps = 0
     print_freq = 50
     dev_score_list = []
+
+    '''ngpus = 2
+    device_array = [i for i in range(0,ngpus)]
+
+    pmodel = torch.nn.DataParallel(model, device_ids=device_array)'''
 
     if scheduler.get_lr()[0] < lr_max:
         scheduler.step()
@@ -208,7 +213,7 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_updated_big.RelationNetworks(encoder, args.gpuid)
+    model = model_updated.RelationNetworks(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 

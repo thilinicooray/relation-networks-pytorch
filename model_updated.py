@@ -57,10 +57,10 @@ class RelationNetworks(nn.Module):
         self.verb = nn.Sequential(
             nn.Linear(24*8*8, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden, self.n_verbs),
+            nn.Linear(mlp_hidden*2, self.n_verbs),
         )
 
         self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
@@ -81,12 +81,12 @@ class RelationNetworks(nn.Module):
         )
 
         self.f = nn.Sequential(
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*4),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden*4, mlp_hidden*16),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden, self.vocab_size),
+            nn.Linear(mlp_hidden*16, self.vocab_size),
         )
 
         self.conv_hidden = 24
