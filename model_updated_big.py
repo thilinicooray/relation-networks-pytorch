@@ -212,7 +212,7 @@ class RelationNetworks(nn.Module):
 
         pred_list = []
 
-        for i in batch_size:
+        for i in range(0,batch_size):
             conv_i = conv[i].expand(self.n_verbs, conv.size(1), conv.size(2), conv.size(3))
             verbs = torch.arange(self.n_verbs)
             print(verbs)
