@@ -64,7 +64,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            #print('current loss = ', loss)
+            print('current loss = ', loss)
 
             loss.backward()
 
@@ -91,6 +91,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             top1.add_point(verb_predict, verb, role_predict, labels, roles)
             top5.add_point(verb_predict, verb, role_predict, labels, roles)
+
+            print('added stuff')
 
 
             if total_steps % print_freq == 0:

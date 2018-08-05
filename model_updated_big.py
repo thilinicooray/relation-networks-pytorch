@@ -187,9 +187,13 @@ class RelationNetworks(nn.Module):
         print('no issue after g view')
         f = self.f(g)
         print('no issue after f')
+        if self.gpu_mode >= 0:
+            torch.cuda.empty_cache()
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
         #print('ffffff', f.size())
+
+        del f, g
 
         return verb_pred, role_predict
 
