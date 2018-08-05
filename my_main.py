@@ -194,6 +194,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
+    parser.add_argument("--command", choices = ["train", "eval", "resume"], required = True)
+    parser.add_argument("--weights_file", help="the model to start from")
 
     args = parser.parse_args()
 
@@ -221,13 +223,15 @@ def main():
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=8, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=16, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/train_eval.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
-    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
+    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=16, shuffle=True, num_workers=n_worker)
 
-
+    if args.command == "resume":
+        print ("loading model weights...")
+        model.load_state_dict(torch.load(args.weights_file))
 
     if args.gpuid >= 0:
         #print('GPU enabled')

@@ -198,6 +198,7 @@ class RelationNetworks(nn.Module):
         return verb_pred, role_predict
 
     def forward_eval(self, image):
+        #cannot run in one go OOM
 
         '''print('testing 123')
         x = torch.tensor([[1, 2, 3],[4,5,6]])
