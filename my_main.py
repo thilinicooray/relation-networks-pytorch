@@ -222,11 +222,11 @@ def main():
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=16, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/train_eval.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
-    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=16, shuffle=True, num_workers=n_worker)
+    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 
     if args.command == "resume":
         print ("loading model weights...")
