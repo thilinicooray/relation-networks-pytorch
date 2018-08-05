@@ -63,12 +63,12 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            loss = pmodel.calculate_loss(verb_predict, verb, role_predict, labels)
             #print('current loss = ', loss)
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
+            torch.nn.utils.clip_grad_norm_(pmodel.parameters(), clip_norm)
 
 
             '''for param in filter(lambda p: p.requires_grad,model.parameters()):
@@ -103,8 +103,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
 
             if total_steps % eval_frequency == 0:
-                top1, top5, val_loss = eval(model, dev_loader, encoder, gpu_mode)
-                model.train()
+                top1, top5, val_loss = eval(pmodel, dev_loader, encoder, gpu_mode)
+                pmodel.train()
 
                 top1_avg = top1.get_average_results()
                 top5_avg = top5.get_average_results()
@@ -123,13 +123,13 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
                 if max_score == dev_score_list[-1]:
                     checkpoint_name = os.path.join(model_dir, '{}_devloss_cnngraph_{}.h5'.format('baseline', len(dev_score_list)))
-                    utils.save_net(checkpoint_name, model)
+                    utils.save_net(checkpoint_name, pmodel)
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
 
-                top1, top5, val_loss = eval(model, traindev_loader, encoder, gpu_mode)
-                model.train()
+                top1, top5, val_loss = eval(pmodel, traindev_loader, encoder, gpu_mode)
+                pmodel.train()
 
                 top1_avg = top1.get_average_results()
                 top5_avg = top5.get_average_results()
@@ -148,6 +148,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top5 = imsitu_scorer(encoder, 5, 3)
 
             del verb_predict, role_predict, loss, img, verb, roles, labels
+            if model.gpu_mode >= 0:
+                torch.cuda.empty_cache()
             #break
         print('Epoch ', epoch, ' completed!')
         #break
