@@ -155,7 +155,7 @@ class RelationNetworks(nn.Module):
         qst = qst.repeat(1,n_pair * n_pair,1)
         qst = torch.squeeze(qst)
 
-        print('qst size', qst.size())
+        #print('qst size', qst.size())
 
         '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
             batch_size_updated, n_pair * n_pair, self.lstm_hidden
@@ -164,7 +164,7 @@ class RelationNetworks(nn.Module):
 
         #update conv to expand for all roles in 1 image
         conv = conv.repeat(1,self.max_role_count, 1, 1)
-        print('conv, size', conv.size())
+        #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
         #print('after view', conv.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
@@ -175,25 +175,25 @@ class RelationNetworks(nn.Module):
         conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
         conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
         #print('size :', conv2.size())
-        print('no issue efore cat')
+        #print('no issue efore cat')
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-        print('no issue after cat')
+        #print('no issue after cat')
         g = self.g(concat_vec)
 
-        if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()
-        print('no issue after g')
+        '''if self.gpu_mode >= 0:
+            torch.cuda.empty_cache()'''
+        #print('no issue after g')
         g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
-        print('no issue after g view')
+        #print('no issue after g view')
         f = self.f(g)
-        print('no issue after f')
-        if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()
+        #print('no issue after f')
+        '''if self.gpu_mode >= 0:
+            torch.cuda.empty_cache()'''
 
         role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
         #print('ffffff', f.size())
 
-        del f, g
+        #del f, g
 
         return verb_pred, role_predict
 
@@ -215,6 +215,7 @@ class RelationNetworks(nn.Module):
         for i in batch_size:
             conv_i = conv[i].expand(self.n_verbs, conv.size(1), conv.size(2), conv.size(3))
             verbs = torch.arange(self.n_verbs)
+            print(verbs)
             roles = self.encoder.get_role_ids_batch(verbs)
             print('roles ', roles.size())
 
@@ -259,8 +260,8 @@ class RelationNetworks(nn.Module):
             #print('size :', conv2.size())
             concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
             g = self.g(concat_vec)
-            if self.gpu_mode >= 0:
-                torch.cuda.empty_cache()
+            '''if self.gpu_mode >= 0:
+                torch.cuda.empty_cache()'''
             g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
             f = self.f(g)
 
