@@ -78,29 +78,6 @@ def build_mlp(dim_list, activation='relu', batch_norm='none',
             layers.append(nn.Dropout(p=dropout))
     return nn.Sequential(*layers)
 
-def save_net(fname, net):
-    import h5py
-    h5f = h5py.File(fname, mode='w')
-    for k, v in net.state_dict().items():
-        h5f.create_dataset(k, data=v.cpu().numpy())
-        #print '[Saved]: {}'.format(k)
-
-
-def load_net(fname, net):
-    import h5py
-    h5f = h5py.File(fname, mode='r')
-    try:
-        for k, v in net.state_dict().items():
-            if k in h5f:
-                param = torch.from_numpy(np.asarray(h5f[k]))
-                v.copy_(param)
-                print ('[Copied]: {}'.format(k))
-            else:
-                print ('[Missed]: {}'.format(k))
-    except Exception as e:
-        pdb.set_trace()
-        print('[Loaded net not complete] Parameter[{}] Size Mismatch...'.format(k))
-
 def format_dict(d, s, p):
     rv = ""
     for (k,v) in d.items():
