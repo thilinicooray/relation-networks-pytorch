@@ -114,7 +114,7 @@ class imsitu_encoder():
             role_ids = self.get_role_ids(verb_id)
             role_batch_list.append(role_ids)
 
-        return torch.tensor(role_batch_list)
+        return torch.stack(role_batch_list,0)
 
     def get_role_ids(self, verb_id):
 

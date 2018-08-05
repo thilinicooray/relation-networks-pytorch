@@ -10,11 +10,11 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=400):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=2):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 2
     dev_score_list = []
 
     if model.gpu_mode >= 0 :
@@ -226,8 +226,8 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    dataset_folder = 'imSitu'
-    imgset_folder = 'resized_256'
+    dataset_folder = 'imsitu_data'
+    imgset_folder = 'of500_images_resized'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
