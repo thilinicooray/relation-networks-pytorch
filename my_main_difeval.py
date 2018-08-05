@@ -68,6 +68,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             loss.backward()
 
+            print('loss back')
+
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
@@ -79,6 +81,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
 
             optimizer.step()
+            print('opt step')
 
             '''print('grad check :')
             for f in model.parameters():
@@ -88,6 +91,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 print(f.grad)'''
 
             train_loss += loss.item()
+            print('added loss')
 
             top1.add_point(verb_predict, verb, role_predict, labels, roles)
             top5.add_point(verb_predict, verb, role_predict, labels, roles)
