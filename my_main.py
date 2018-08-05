@@ -10,7 +10,7 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=2):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -119,8 +119,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    checkpoint_name = os.path.join(model_dir, '{}_devloss_cnngraph_{}.h5'.format('baseline', len(dev_score_list)))
-                    utils.save_net(checkpoint_name, model)
+                    torch.save(model.state_dict(), model_dir + "/{0}.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -194,7 +193,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
-    parser.add_argument("--command", choices = ["train", "eval", "resume"], required = True)
+    parser.add_argument("--command", choices = ["train", "eval", "resume", 'predict'], required = True)
     parser.add_argument("--weights_file", help="the model to start from")
 
     args = parser.parse_args()
@@ -203,7 +202,7 @@ def main():
     lr = 5e-6
     lr_max = 5e-4
     lr_gamma = 2
-    lr_step = 20
+    lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
@@ -231,6 +230,7 @@ def main():
 
     if args.command == "resume":
         print ("loading model weights...")
+        model.load_state_dict(torch.load(args.weights_file))
         utils.load_net(torch.load(args.weights_file), model)
 
     if args.gpuid >= 0:
