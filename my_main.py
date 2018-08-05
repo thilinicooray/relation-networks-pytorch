@@ -231,7 +231,7 @@ def main():
 
     if args.command == "resume":
         print ("loading model weights...")
-        model.load_state_dict(torch.load(args.weights_file))
+        utils.load_net(torch.load(args.weights_file), model)
 
     if args.gpuid >= 0:
         #print('GPU enabled')
