@@ -215,14 +215,14 @@ class RelationNetworks(nn.Module):
         for i in range(0,batch_size):
             conv_i = conv[i].expand(self.n_verbs, conv.size(1), conv.size(2), conv.size(3))
             verbs = torch.arange(self.n_verbs)
-            print(verbs)
-            roles = self.encoder.get_role_ids_batch(verbs)
+            #print(verbs)
+            roles = self.encoder.get_role_ids_batch(verbs.type(torch.LongTensor))
             print('roles ', roles.size())
 
             batch_size, n_channel, conv_h, conv_w = conv.size()
             n_pair = conv_h * conv_w
 
-            verb_embd = self.verb_lookup(verbs)
+            verb_embd = self.verb_lookup(verbs.type(torch.LongTensor))
             role_embd = self.role_lookup(roles)
 
             role_embed_reshaped = role_embd.transpose(0,1)
