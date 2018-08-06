@@ -329,7 +329,7 @@ class RelationNetworks(nn.Module):
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
 
                 frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
-                #print('frame loss', frame_loss)
+                print('frame loss', frame_loss)
                 loss += frame_loss
 
 
