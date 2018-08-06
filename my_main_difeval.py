@@ -187,7 +187,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
             top1.add_point_eval(verb_predict, verb, role_predict, labels)
             top5.add_point_eval(verb_predict, verb, role_predict, labels)
 
-            del verb_predict, role_predict, img, verb, roles, labels, loss
+            del verb_predict, role_predict, img, verb, roles, labels
             #break
 
     #return top1, top5, val_loss/mx
