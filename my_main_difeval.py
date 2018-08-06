@@ -116,7 +116,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
                                                              utils.format_dict(top1_avg,'{:.2f}', '1-'),
                                                              utils.format_dict(top5_avg, '{:.2f}', '5-')))
-                print('Dev loss :', val_loss)
+                #print('Dev loss :', val_loss)
 
                 dev_score_list.append(avg_score)
                 max_score = max(dev_score_list)
@@ -182,15 +182,17 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 labels = torch.autograd.Variable(labels)
 
             verb_predict, role_predict = model.forward_eval(img)
-            loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
-            val_loss += loss.item()
+            '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
+            val_loss += loss.item()'''
             top1.add_point_eval(verb_predict, verb, role_predict, labels)
             top5.add_point_eval(verb_predict, verb, role_predict, labels)
 
             del verb_predict, role_predict, img, verb, roles, labels, loss
             #break
 
-    return top1, top5, val_loss/mx
+    #return top1, top5, val_loss/mx
+
+    return top1, top5, 0
 
 def main():
 
