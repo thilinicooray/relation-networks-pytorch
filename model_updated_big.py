@@ -141,6 +141,8 @@ class RelationNetworks(nn.Module):
 
         verb_embd = self.verb_lookup(verbs)
         role_embd = self.role_lookup(roles)
+        #print('verb embed :', verb_embd.size())
+        #print('role embed :', role_embd.size())
 
         role_embed_reshaped = role_embd.transpose(0,1)
         verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
@@ -198,87 +200,89 @@ class RelationNetworks(nn.Module):
         return verb_pred, role_predict
 
     def forward_eval(self, image):
-        #cannot run in one go OOM
-
-        '''print('testing 123')
-        x = torch.tensor([[1, 2, 3],[4,5,6]])
-        print('original', x.size())
-        x = x.repeat(1,2)
-        print('xxxxxx', x, x.view(-1,3), x.size())'''
-        batch_size = image.size(0)
         conv = self.conv(image)
 
         #verb pred
         verb_pred = self.verb(conv.view(-1, 7*7*self.conv.base_size()))
+        #print('verb pred', verb_pred.size())
+        sorted_idx = torch.sort(verb_pred, 1, True)[1]
+        #print('sorted ', sorted_idx.size())
+        verbs = sorted_idx[:,0]
 
-        pred_list = []
+        #print('verbs :', verbs.size(), verbs)
 
-        for i in range(0,batch_size):
-            conv_i = conv[i].expand(self.n_verbs, conv.size(1), conv.size(2), conv.size(3))
-            verbs = torch.arange(self.n_verbs)
-            verbs = verbs.type(torch.LongTensor)
+        roles = self.encoder.get_role_ids_batch(verbs)
 
-            if self.gpu_mode >= 0:
-                verbs = verbs.to(torch.device('cuda'))
+        roles = roles.type(torch.LongTensor)
+        verbs = verbs.type(torch.LongTensor)
 
-            #print(verbs)
-            roles = self.encoder.get_role_ids_batch(verbs)
-            print('roles ', roles.size())
+        if self.gpu_mode >= 0:
+            roles = roles.to(torch.device('cuda'))
+            verbs = verbs.to(torch.device('cuda'))
 
-            batch_size, n_channel, conv_h, conv_w = conv.size()
-            n_pair = conv_h * conv_w
+        batch_size, n_channel, conv_h, conv_w = conv.size()
+        n_pair = conv_h * conv_w
 
-            if self.gpu_mode >= 0:
-                roles = roles.to(torch.device('cuda'))
+        verb_embd = self.verb_lookup(verbs)
+        #print('verb embed :', verb_embd.size())
+        role_embd = self.role_lookup(roles)
+        #print('role embed :', role_embd.size())
 
-            verb_embd = self.verb_lookup(verbs)
-            role_embd = self.role_lookup(roles)
+        role_embed_reshaped = role_embd.transpose(0,1)
+        verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
+        role_verb_embd = verb_embed_expand * role_embed_reshaped
+        role_verb_embd =  role_verb_embd.transpose(0,1)
+        role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
+        #new batch size = batch_size*max_role
+        batch_size_updated = role_verb_embd.size(0)
+        #print('new', batch_size_updated, n_pair, role_verb_embd.size())
 
-            role_embed_reshaped = role_embd.transpose(0,1)
-            verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
-            role_verb_embd = verb_embed_expand * role_embed_reshaped
-            role_verb_embd =  role_verb_embd.transpose(0,1)
-            role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
-            #new batch size = batch_size*max_role
-            batch_size_updated = role_verb_embd.size(0)
-            #print('new', batch_size_updated, n_pair, role_verb_embd.size())
+        qst = torch.unsqueeze(role_verb_embd, 1)
+        qst = qst.repeat(1,n_pair * n_pair,1)
+        qst = torch.squeeze(qst)
 
-            qst = torch.unsqueeze(role_verb_embd, 1)
-            qst = qst.repeat(1,n_pair * n_pair,1)
-            qst = torch.squeeze(qst)
+        #print('qst size', qst.size())
 
-            #print('qst size', qst.size())
-
-            '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
-                batch_size_updated, n_pair * n_pair, self.lstm_hidden
-            )'''
+        '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
+            batch_size_updated, n_pair * n_pair, self.lstm_hidden
+        )'''
 
 
-            #update conv to expand for all roles in 1 image
-            conv_i = conv_i.repeat(1,self.max_role_count, 1, 1)
-            #print('conv, size', conv.size())
-            conv_i = conv_i.view(-1, n_channel, conv_h, conv_w)
-            #print('after view', conv.size())
-            conv_i = torch.cat([conv_i, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
-            n_channel += 2
-            conv_tr = conv_i.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
-            conv1 = conv_tr.unsqueeze(1).expand(batch_size_updated, n_pair, n_pair, n_channel)
-            conv2 = conv_tr.unsqueeze(2).expand(batch_size_updated, n_pair, n_pair, n_channel)
-            conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
-            conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
-            #print('size :', conv2.size())
-            concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-            g = self.g(concat_vec)
-            '''if self.gpu_mode >= 0:
-                torch.cuda.empty_cache()'''
-            g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
-            f = self.f(g)
+        #update conv to expand for all roles in 1 image
+        conv = conv.repeat(1,self.max_role_count, 1, 1)
+        #print('conv, size', conv.size())
+        conv = conv.view(-1, n_channel, conv_h, conv_w)
+        #print('after view', conv.size())
+        conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
+        n_channel += 2
+        conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
+        conv1 = conv_tr.unsqueeze(1).expand(batch_size_updated, n_pair, n_pair, n_channel)
+        conv2 = conv_tr.unsqueeze(2).expand(batch_size_updated, n_pair, n_pair, n_channel)
+        conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
+        conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
+        #print('size :', conv2.size())
+        #print('no issue efore cat')
+        concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+        #print('no issue after cat')
+        g = self.g(concat_vec)
 
-            role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-            pred_list.append(role_predict)
-            #print('ffffff', f.size())
+        '''if self.gpu_mode >= 0:
+            torch.cuda.empty_cache()'''
+        #print('no issue after g')
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+        #print('no issue after g view')
+        f = self.f(g)
+        #print('no issue after f')
+        '''if self.gpu_mode >= 0:
+            torch.cuda.empty_cache()'''
 
-        return verb_pred, torch.stack(pred_list,0)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+        #print('ffffff', f.size())
+
+        #del f, g
+
+        return verb_pred, role_predict
+
 
     def calculate_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
 
@@ -290,6 +294,40 @@ class RelationNetworks(nn.Module):
                 verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
                 for j in range(0, self.max_role_count):
                     frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,j] ,self.vocab_size)
+                frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
+                #print('frame loss', frame_loss)
+                loss += frame_loss
+
+
+        final_loss = loss/batch_size
+        #print('loss :', final_loss)
+        return final_loss
+
+    def calculate_eval_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels):
+
+        batch_size = verb_pred.size()[0]
+        loss = 0
+        sorted_idx = torch.sort(verb_pred, 1, True)[1]
+        pred_verbs = sorted_idx[:,0]
+        #print('eval pred verbs :', pred_verbs)
+        for i in range(batch_size):
+            for index in range(gt_labels.size()[1]):
+                frame_loss = 0
+                verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
+                gt_role_list = self.encoder.get_role_ids(gt_verbs[i])
+                pred_role_list = self.encoder.get_role_ids(pred_verbs[i])
+
+                #print ('role list diff :', gt_role_list, pred_role_list)
+
+                for j in range(0, self.max_role_count):
+                    if pred_role_list[j] == len(self.encoder.role_list):
+                        continue
+                    if pred_role_list[j] in gt_role_list:
+                        #print('eval loss :', gt_role_list, pred_role_list[j])
+                        g_idx = (gt_role_list == pred_role_list[j]).nonzero()
+                        #print('found idx' , g_idx)
+                        frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
+
                 frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
                 #print('frame loss', frame_loss)
                 loss += frame_loss

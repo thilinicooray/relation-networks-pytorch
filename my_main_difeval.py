@@ -68,8 +68,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             loss.backward()
 
-            #print('loss back')
-
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
@@ -81,7 +79,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
 
             optimizer.step()
-            #print('opt step')
 
             '''print('grad check :')
             for f in model.parameters():
@@ -91,12 +88,9 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 print(f.grad)'''
 
             train_loss += loss.item()
-            #print('added loss')
 
-            top1.add_point(verb_predict, verb, role_predict, labels, roles)
-            top5.add_point(verb_predict, verb, role_predict, labels, roles)
-
-            #print('added stuff')
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
 
             if total_steps % print_freq == 0:
@@ -128,8 +122,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    checkpoint_name = os.path.join(model_dir, '{}_devloss_cnngraph_{}.h5'.format('baseline', len(dev_score_list)))
-                    utils.save_net(checkpoint_name, model)
+                    torch.save(model.state_dict(), model_dir + "/{0}.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -154,8 +147,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top5 = imsitu_scorer(encoder, 5, 3)
 
             del verb_predict, role_predict, loss, img, verb, roles, labels
-            if model.gpu_mode >= 0:
-                torch.cuda.empty_cache()
             #break
         print('Epoch ', epoch, ' completed!')
         #break
@@ -191,20 +182,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 labels = torch.autograd.Variable(labels)
 
             verb_predict, role_predict = model.forward_eval(img)
-            print('role pred :', role_predict.size())
-
-            #send only role label predictions for correct verb for loss calc and accuracy calc
-            final_role_pred = []
-
-            for i in range(0,len(verb)):
-                final_role_pred.append(role_predict[i, verb[i]])
-
-            loss = model.calculate_loss(verb_predict, verb, final_role_pred, labels)
+            loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()
-            top1.add_point(verb_predict, verb, final_role_pred, labels, roles)
-            top5.add_point(verb_predict, verb, final_role_pred, labels, roles)
+            top1.add_point_eval(verb_predict, verb, role_predict, labels)
+            top5.add_point_eval(verb_predict, verb, role_predict, labels)
 
-            del verb_predict, role_predict, final_role_pred, img, verb, roles, labels, loss
+            del verb_predict, role_predict, img, verb, roles, labels, loss
+            break
 
     return top1, top5, val_loss/mx
 
@@ -213,13 +197,15 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
+    parser.add_argument("--command", choices = ["train", "eval", "resume", 'predict'], required = True)
+    parser.add_argument("--weights_file", help="the model to start from")
 
     args = parser.parse_args()
 
     batch_size = 640
     lr = 5e-6
     lr_max = 5e-4
-    lr_gamma = 5
+    lr_gamma = 2
     lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
@@ -240,13 +226,15 @@ def main():
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/train_eval.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
-    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 
-
+    if args.command == "resume":
+        print ("loading model weights...")
+        model.load_state_dict(torch.load(args.weights_file))
 
     if args.gpuid >= 0:
         #print('GPU enabled')
