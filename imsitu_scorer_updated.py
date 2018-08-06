@@ -132,6 +132,8 @@ class imsitu_scorer():
                         found = True
                         break
                 if not found: all_found = False
+                if len(pred_list) < len(gt_role_list):
+                    all_found = False
                 #both verb and at least one val found
                 if found and verb_found: score_card["value"] += 1
                 #at least one val found
