@@ -210,7 +210,8 @@ class RelationNetworks(nn.Module):
 
         #print('verbs :', verbs.size(), verbs)
 
-        roles = self.encoder.get_role_ids_batch(verbs)
+        #roles = self.encoder.get_role_ids_batch(verbs)
+        roles = torch.arange(0, self.n_roles)
 
         roles = roles.type(torch.LongTensor)
         verbs = verbs.type(torch.LongTensor)
@@ -262,7 +263,7 @@ class RelationNetworks(nn.Module):
         #print('size :', conv2.size())
         #print('no issue efore cat')
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-        #print('no issue after cat')
+        print('full :', concat_vec.size())
         g = self.g(concat_vec)
 
         '''if self.gpu_mode >= 0:
@@ -455,7 +456,7 @@ class RelationNetworks(nn.Module):
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
 
                 frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
-                print('frame loss', frame_loss)
+                print('frame loss', frame_loss, frame_loss.size())
                 loss += frame_loss
 
 
