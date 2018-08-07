@@ -200,10 +200,10 @@ class RelationNetworks(nn.Module):
     #def forward_eval(self, image):
     def forward(self, image):
         batch_size = image.size(0)
-        conv = self.conv(image)
+        conv_org = self.conv(image)
 
         #verb pred
-        verb_pred = self.verb(conv.view(-1, 7*7*self.conv.base_size()))
+        verb_pred = self.verb(conv_org.view(-1, 7*7*self.conv.base_size()))
         #print('verb pred', verb_pred.size())
         sorted_idx = torch.sort(verb_pred, 1, True)[1]
         #print('sorted ', sorted_idx.size())
@@ -224,6 +224,7 @@ class RelationNetworks(nn.Module):
 
         step_size = 10
         for i in range(0,self.n_roles,step_size):
+            conv = conv_org
 
             batch_size, n_channel, conv_h, conv_w = conv.size()
             n_pair = conv_h * conv_w
