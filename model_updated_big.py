@@ -121,7 +121,7 @@ class RelationNetworks(nn.Module):
     def train_preprocess(self): return self.train_transform
     def dev_preprocess(self): return self.dev_transform
 
-    def forward(self, image, verbs, roles):
+    def forward1(self, image, verbs, roles):
 
         '''print('testing 123')
         x = torch.tensor([[1, 2, 3],[4,5,6]])
@@ -197,7 +197,8 @@ class RelationNetworks(nn.Module):
 
         return verb_pred, role_predict
 
-    def forward_eval(self, image):
+    #def forward_eval(self, image):
+    def forward(self, image):
         conv = self.conv(image)
 
         #verb pred
