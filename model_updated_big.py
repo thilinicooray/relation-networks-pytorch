@@ -199,6 +199,7 @@ class RelationNetworks(nn.Module):
 
     #def forward_eval(self, image):
     def forward(self, image):
+        batch_size = image.size(0)
         conv = self.conv(image)
 
         #verb pred
@@ -212,6 +213,7 @@ class RelationNetworks(nn.Module):
 
         #roles = self.encoder.get_role_ids_batch(verbs)
         roles = torch.arange(0, self.n_roles)
+        roles = roles.repeat(batch_size, 1)
 
         roles = roles.type(torch.LongTensor)
         verbs = verbs.type(torch.LongTensor)
