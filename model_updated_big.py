@@ -139,8 +139,8 @@ class RelationNetworks(nn.Module):
 
         verb_embd = self.verb_lookup(verbs)
         role_embd = self.role_lookup(roles)
-        print('verb embed :', verb_embd.size())
-        print('role embed :', role_embd.size())
+        #print('verb embed :', verb_embd.size())
+        #print('role embed :', role_embd.size())
 
         role_embed_reshaped = role_embd.transpose(0,1)
         verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
@@ -149,13 +149,13 @@ class RelationNetworks(nn.Module):
         role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
         #new batch size = batch_size*max_role
         batch_size_updated = role_verb_embd.size(0)
-        print('new', batch_size_updated, n_pair, role_verb_embd.size())
+        #print('new', batch_size_updated, n_pair, role_verb_embd.size())
 
         qst = torch.unsqueeze(role_verb_embd, 1)
         qst = qst.repeat(1,n_pair * n_pair,1)
         qst = torch.squeeze(qst)
 
-        print('qst size', qst.size())
+        #print('qst size', qst.size())
 
         '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
             batch_size_updated, n_pair * n_pair, self.lstm_hidden
@@ -166,7 +166,7 @@ class RelationNetworks(nn.Module):
         conv = conv.repeat(1,self.max_role_count, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
-        print('after view', conv.size())
+        #print('after view', conv.size())
         conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
         n_channel += 2
         conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
@@ -384,23 +384,23 @@ class RelationNetworks(nn.Module):
                 beam_role_idx = torch.cat((beam_role_idx.clone(), role_max_idx), 1)
                 beam_joint_prob = torch.cat((beam_joint_prob.clone(), torch.unsqueeze(situation_joint_prob,1)), 1)
 
-        print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
+        #print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
 
         sorted_prob, sorted_joint_idx = torch.sort(beam_joint_prob, 1, True)
-        print('joint prob ', beam_joint_prob)
+        #print('joint prob ', beam_joint_prob)
         sorted_beam_verb_ids = []
         max_beam_role_label_ids = []
 
         for i in range(0,batch_size):
             sorted_order = sorted_joint_idx[i]
-            print('sorted order', sorted_order, 'org verb', verbs[i])
+            #print('sorted order', sorted_order, 'org verb', verbs[i])
             verbs_ordered = verbs[i][sorted_order]
-            print('ordered verbs ', verbs_ordered)
+            #print('ordered verbs ', verbs_ordered)
             sorted_beam_verb_ids.append(verbs_ordered)
             max_i = sorted_order[0]
 
             label_ids = beam_role_idx[i][6*max_i:6*(max_i+1)]
-            print('role place ', max_i, 6*max_i, 6*(max_i+1), label_ids)
+            #print('role place ', max_i, 6*max_i, 6*(max_i+1), label_ids)
             max_beam_role_label_ids.append(label_ids)
         #del f, g
 
