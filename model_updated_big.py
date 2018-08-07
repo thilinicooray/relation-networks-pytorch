@@ -232,12 +232,16 @@ class RelationNetworks(nn.Module):
             #print('verb embed :', verb_embd.size())
             if self.n_roles - i >= step_size:
                 role_embd = self.role_lookup(roles[:,i:i+step_size])
+                role_len = 20
             else:
                 role_embd = self.role_lookup(roles[:,i:])
-            #print('role embed :', role_embd.size())
+                role_len = self.n_roles - i
+                #print('role embed :', role_embd.size())
+
+
 
             role_embed_reshaped = role_embd.transpose(0,1)
-            verb_embed_expand = verb_embd.expand(self.n_roles, verb_embd.size(0), verb_embd.size(1))
+            verb_embed_expand = verb_embd.expand(role_len, verb_embd.size(0), verb_embd.size(1))
             #print('sizes' , role_embed_reshaped.size(), verb_embed_expand.size())
             role_verb_embd = verb_embed_expand * role_embed_reshaped
             role_verb_embd =  role_verb_embd.transpose(0,1)
@@ -258,7 +262,7 @@ class RelationNetworks(nn.Module):
 
 
             #update conv to expand for all roles in 1 image
-            conv = conv.repeat(1,self.n_roles, 1, 1)
+            conv = conv.repeat(1,role_len, 1, 1)
             #print('conv, size', conv.size())
             conv = conv.view(-1, n_channel, conv_h, conv_w)
             #print('after view', conv.size())
