@@ -232,7 +232,7 @@ class RelationNetworks(nn.Module):
             #print('verb embed :', verb_embd.size())
             if self.n_roles - i >= step_size:
                 role_embd = self.role_lookup(roles[:,i:i+step_size])
-                role_len = 20
+                role_len = step_size
             else:
                 role_embd = self.role_lookup(roles[:,i:])
                 role_len = self.n_roles - i
