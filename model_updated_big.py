@@ -229,7 +229,7 @@ class RelationNetworks(nn.Module):
         #print('role embed :', role_embd.size())
 
         role_embed_reshaped = role_embd.transpose(0,1)
-        verb_embed_expand = verb_embd.expand(self.max_role_count, verb_embd.size(0), verb_embd.size(1))
+        verb_embed_expand = verb_embd.expand(self.n_roles, verb_embd.size(0), verb_embd.size(1))
         role_verb_embd = verb_embed_expand * role_embed_reshaped
         role_verb_embd =  role_verb_embd.transpose(0,1)
         role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
@@ -249,7 +249,7 @@ class RelationNetworks(nn.Module):
 
 
         #update conv to expand for all roles in 1 image
-        conv = conv.repeat(1,self.max_role_count, 1, 1)
+        conv = conv.repeat(1,self.n_roles, 1, 1)
         #print('conv, size', conv.size())
         conv = conv.view(-1, n_channel, conv_h, conv_w)
         #print('after view', conv.size())
