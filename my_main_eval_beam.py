@@ -10,7 +10,7 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=20000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -161,7 +161,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     with torch.no_grad():
         mx = len(dev_loader)
         for i, (img, verb, roles,labels) in enumerate(dev_loader):
-            #print("{}/{} batches\r".format(i+1,mx)) ,
+            print("{}/{} batches\r".format(i+1,mx)) ,
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
