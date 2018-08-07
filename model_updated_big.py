@@ -222,65 +222,79 @@ class RelationNetworks(nn.Module):
             roles = roles.to(torch.device('cuda'))
             verbs = verbs.to(torch.device('cuda'))
 
-        batch_size, n_channel, conv_h, conv_w = conv.size()
-        n_pair = conv_h * conv_w
+        step_size = 20
+        for i in range(0,self.n_roles,step_size):
 
-        verb_embd = self.verb_lookup(verbs)
-        #print('verb embed :', verb_embd.size())
-        role_embd = self.role_lookup(roles)
-        print('role embed :', role_embd.size())
+            batch_size, n_channel, conv_h, conv_w = conv.size()
+            n_pair = conv_h * conv_w
 
-        role_embed_reshaped = role_embd.transpose(0,1)
-        verb_embed_expand = verb_embd.expand(self.n_roles, verb_embd.size(0), verb_embd.size(1))
-        print('sizes' , role_embed_reshaped.size(), verb_embed_expand.size())
-        role_verb_embd = verb_embed_expand * role_embed_reshaped
-        role_verb_embd =  role_verb_embd.transpose(0,1)
-        role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
-        #new batch size = batch_size*max_role
-        batch_size_updated = role_verb_embd.size(0)
-        #print('new', batch_size_updated, n_pair, role_verb_embd.size())
+            verb_embd = self.verb_lookup(verbs)
+            #print('verb embed :', verb_embd.size())
+            if self.n_roles - i >= step_size:
+                role_embd = self.role_lookup(roles[:,i:i+step_size])
+            else:
+                role_embd = self.role_lookup(roles[:,i:])
+            #print('role embed :', role_embd.size())
 
-        qst = torch.unsqueeze(role_verb_embd, 1)
-        qst = qst.repeat(1,n_pair * n_pair,1)
-        qst = torch.squeeze(qst)
+            role_embed_reshaped = role_embd.transpose(0,1)
+            verb_embed_expand = verb_embd.expand(self.n_roles, verb_embd.size(0), verb_embd.size(1))
+            #print('sizes' , role_embed_reshaped.size(), verb_embed_expand.size())
+            role_verb_embd = verb_embed_expand * role_embed_reshaped
+            role_verb_embd =  role_verb_embd.transpose(0,1)
+            role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
+            #new batch size = batch_size*max_role
+            batch_size_updated = role_verb_embd.size(0)
+            #print('new', batch_size_updated, n_pair, role_verb_embd.size())
 
-        #print('qst size', qst.size())
+            qst = torch.unsqueeze(role_verb_embd, 1)
+            qst = qst.repeat(1,n_pair * n_pair,1)
+            qst = torch.squeeze(qst)
 
-        '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
-            batch_size_updated, n_pair * n_pair, self.lstm_hidden
-        )'''
+            #print('qst size', qst.size())
+
+            '''h_tile = role_verb_embd.permute(1, 0, 2).expand(
+                batch_size_updated, n_pair * n_pair, self.lstm_hidden
+            )'''
 
 
-        #update conv to expand for all roles in 1 image
-        conv = conv.repeat(1,self.n_roles, 1, 1)
-        #print('conv, size', conv.size())
-        conv = conv.view(-1, n_channel, conv_h, conv_w)
-        #print('after view', conv.size())
-        conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
-        n_channel += 2
-        conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
-        conv1 = conv_tr.unsqueeze(1).expand(batch_size_updated, n_pair, n_pair, n_channel)
-        conv2 = conv_tr.unsqueeze(2).expand(batch_size_updated, n_pair, n_pair, n_channel)
-        conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
-        conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
-        #print('size :', conv2.size())
-        #print('no issue efore cat')
-        concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-        print('full :', concat_vec.size())
-        g = self.g(concat_vec)
+            #update conv to expand for all roles in 1 image
+            conv = conv.repeat(1,self.n_roles, 1, 1)
+            #print('conv, size', conv.size())
+            conv = conv.view(-1, n_channel, conv_h, conv_w)
+            #print('after view', conv.size())
+            conv = torch.cat([conv, self.coords.expand(batch_size_updated, 2, conv_h, conv_w)], 1)
+            n_channel += 2
+            conv_tr = conv.view(batch_size_updated, n_channel, -1).permute(0, 2, 1)
+            conv1 = conv_tr.unsqueeze(1).expand(batch_size_updated, n_pair, n_pair, n_channel)
+            conv2 = conv_tr.unsqueeze(2).expand(batch_size_updated, n_pair, n_pair, n_channel)
+            conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
+            conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
+            #print('size :', conv2.size())
+            #print('no issue efore cat')
+            concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+            print('full :', concat_vec.size())
+            g = self.g(concat_vec)
 
-        '''if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()'''
-        #print('no issue after g')
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
-        #print('no issue after g view')
-        f = self.f(g)
-        #print('no issue after f')
-        '''if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()'''
+            '''if self.gpu_mode >= 0:
+                torch.cuda.empty_cache()'''
+            #print('no issue after g')
+            g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+            #print('no issue after g view')
+            f = self.f(g)
+            #print('no issue after f')
+            '''if self.gpu_mode >= 0:
+                torch.cuda.empty_cache()'''
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+            role_predict_step = f.contiguous().view(batch_size, -1, self.vocab_size)
+
+            if i == 0:
+                role_predict = role_predict_step
+            else:
+                #print('check' , beam_role_idx.size(), role_max_idx.size(), beam_joint_prob.size(), situation_joint_prob.size())
+                role_predict = torch.cat((role_predict.clone(), role_predict_step), 1)
+
         #print('ffffff', f.size())
+        print('role pred size' , role_predict.size())
 
         #del f, g
 
