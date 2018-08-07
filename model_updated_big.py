@@ -277,6 +277,8 @@ class RelationNetworks(nn.Module):
             #print('size :', conv2.size())
             #print('no issue efore cat')
             concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+            if self.gpu_mode >= 0:
+                torch.cuda.empty_cache()
             print('full :', concat_vec.size())
             g = self.g(concat_vec)
 
