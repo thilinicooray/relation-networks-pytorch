@@ -86,8 +86,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             train_loss += loss.data.item()
 
-            top1.add_point(verb_predict, verb, role_predict, labels, roles)
-            top5.add_point(verb_predict, verb, role_predict, labels, roles)
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
 
             if total_steps % print_freq == 0:
@@ -181,8 +181,8 @@ def eval(model, dev_loader, encoder, gpu_mode):
             verb_predict, role_predict = model(img, verb, roles)
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.data[0]
-            top1.add_point(verb_predict, verb, role_predict, labels, roles)
-            top5.add_point(verb_predict, verb, role_predict, labels, roles)
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
             del verb_predict, role_predict, img, verb, roles, labels, loss
 
