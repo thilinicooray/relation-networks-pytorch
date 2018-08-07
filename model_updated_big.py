@@ -222,7 +222,7 @@ class RelationNetworks(nn.Module):
             roles = roles.to(torch.device('cuda'))
             verbs = verbs.to(torch.device('cuda'))
 
-        step_size = 20
+        step_size = 10
         for i in range(0,self.n_roles,step_size):
 
             batch_size, n_channel, conv_h, conv_w = conv.size()
