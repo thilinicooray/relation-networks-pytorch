@@ -188,7 +188,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
             top5.add_point_eval_beam(verb_predict_ids, verb, role_predict_ids, labels)
 
             del verb_predict_ids, role_predict_ids, img, verb, roles, labels
-            break
+            #break
 
     #return top1, top5, val_loss/mx
 
