@@ -226,10 +226,11 @@ class RelationNetworks(nn.Module):
         verb_embd = self.verb_lookup(verbs)
         #print('verb embed :', verb_embd.size())
         role_embd = self.role_lookup(roles)
-        #print('role embed :', role_embd.size())
+        print('role embed :', role_embd.size())
 
         role_embed_reshaped = role_embd.transpose(0,1)
         verb_embed_expand = verb_embd.expand(self.n_roles, verb_embd.size(0), verb_embd.size(1))
+        print('sizes' , role_embed_reshaped.size(), verb_embed_expand.size())
         role_verb_embd = verb_embed_expand * role_embed_reshaped
         role_verb_embd =  role_verb_embd.transpose(0,1)
         role_verb_embd = role_verb_embd.contiguous().view(-1, self.lstm_hidden)
