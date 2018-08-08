@@ -19,7 +19,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
     if model.gpu_mode >= 0 :
         ngpus = 2
-        device_array = [i for i in range(0,ngpus)]
+        device_array = [1,0]
 
         pmodel = torch.nn.DataParallel(model, device_ids=device_array)
     else:
