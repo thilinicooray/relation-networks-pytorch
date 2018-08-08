@@ -58,14 +58,12 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             optimizer.zero_grad()
 
-            #verb_predict, role_predict = pmodel(img, verb, roles)
-            verb_predict, role_predict = pmodel(img)
+            verb_predict, role_predict = pmodel(img, verb, roles)
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            #loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
+            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
             #print('current loss = ', loss)
 
             loss.backward()
@@ -91,10 +89,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             train_loss += loss.item()
 
-            #top1.add_point(verb_predict, verb, role_predict, labels)
-            #top5.add_point(verb_predict, verb, role_predict, labels)
-            top1.add_point_eval(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval(verb_predict, verb, role_predict, labels)
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
 
             if total_steps % print_freq == 0:
@@ -165,7 +161,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     with torch.no_grad():
         mx = len(dev_loader)
         for i, (img, verb, roles,labels) in enumerate(dev_loader):
-            print("{}/{} batches\r".format(i+1,mx)) ,
+            #print("{}/{} batches\r".format(i+1,mx)) ,
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
@@ -185,7 +181,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model(img)
+            verb_predict, role_predict = model.forward_eval(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
             top1.add_point_eval(verb_predict, verb, role_predict, labels)
