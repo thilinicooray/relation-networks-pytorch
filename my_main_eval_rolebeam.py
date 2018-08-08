@@ -10,11 +10,11 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=24000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=2):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 4000
+    print_freq = 400
     dev_score_list = []
 
     if model.gpu_mode >= 0 :
@@ -127,7 +127,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
                 #eval on the trainset
 
-                '''top1, top5, val_loss = eval(model, traindev_loader, encoder, gpu_mode)
+                top1, top5, val_loss = eval(model, traindev_loader, encoder, gpu_mode)
                 model.train()
 
                 top1_avg = top1.get_average_results()
@@ -139,7 +139,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
                 print ('TRAINDEV {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
                                                                   utils.format_dict(top1_avg,'{:.2f}', '1-'),
-                                                                  utils.format_dict(top5_avg, '{:.2f}', '5-')))'''
+                                                                  utils.format_dict(top5_avg, '{:.2f}', '5-')))
 
                 print('current train loss', train_loss)
                 train_loss = 0
@@ -161,7 +161,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
     with torch.no_grad():
         mx = len(dev_loader)
         for i, (img, verb, roles,labels) in enumerate(dev_loader):
-            #print("{}/{} batches\r".format(i+1,mx)) ,
+            print("{}/{} batches\r".format(i+1,mx)) ,
             '''im_data = torch.squeeze(im_data,0)
             im_info = torch.squeeze(im_info,0)
             gt_boxes = torch.squeeze(gt_boxes,0)
@@ -181,14 +181,14 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model.forward_eval(img)
+            verb_predict_ids, role_predict_ids = model.forward_eval_rolebeam(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_eval(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval(verb_predict, verb, role_predict, labels)
+            top1.add_point_eval_rolebeam(verb_predict_ids, verb, role_predict_ids, labels)
+            top5.add_point_eval_rolebeam(verb_predict_ids, verb, role_predict_ids, labels)
 
-            del verb_predict, role_predict, img, verb, roles, labels
-            #break
+            del verb_predict_ids, role_predict_ids, img, verb, roles, labels
+            break
 
     #return top1, top5, val_loss/mx
 
@@ -214,8 +214,8 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    dataset_folder = 'imSitu'
-    imgset_folder = 'resized_256'
+    dataset_folder = 'imsitu_data'
+    imgset_folder = 'of500_images_resized'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
@@ -224,13 +224,13 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=8, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=8, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
-    traindev_set = json.load(open(dataset_folder +"/dev.json"))
+    traindev_set = json.load(open(dataset_folder +"/train_eval.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
     traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 

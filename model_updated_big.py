@@ -206,6 +206,7 @@ class RelationNetworks(nn.Module):
         sorted_idx = torch.sort(verb_pred, 1, True)[1]
         #print('sorted ', sorted_idx.size())
         verbs = sorted_idx[:,0]
+        #print('top1 verbs', verbs)
 
         #print('verbs :', verbs.size(), verbs)
 
@@ -288,8 +289,8 @@ class RelationNetworks(nn.Module):
 
         #verb pred
         verb_pred = self.verb(conv_org.view(-1, 7*7*self.conv.base_size()))
-        logsm = nn.LogSoftmax()
-        verb_pred_prob = logsm(verb_pred)
+        #logsm = nn.LogSoftmax()
+        verb_pred_prob = F.softmax(verb_pred, dim=-1)
         #print('verb pred', verb_pred.size())
         sorted_prob, sorted_idx = torch.sort(verb_pred_prob, 1, True)
         #print('sorted ', sorted_idx.size())
@@ -413,13 +414,14 @@ class RelationNetworks(nn.Module):
 
         #verb pred
         verb_pred = self.verb(conv_org.view(-1, 7*7*self.conv.base_size()))
-        logsm = nn.LogSoftmax()
-        verb_pred_prob = logsm(verb_pred)
+        logsm = nn.Softmax()
+        verb_pred_prob = logsm(verb_pred, dim=-1)
         #print('verb pred', verb_pred.size())
         sorted_prob, sorted_idx = torch.sort(verb_pred_prob, 1, True)
         #print('sorted ', sorted_idx.size())
         verbs = sorted_idx[:, 0:beam]
         #beam_verb_prob = sorted_prob[:, 0:beam]
+        #print('verb prob', beam_verb_prob[0])
 
         #print('verb sizes ', verbs.size(), beam_verb_prob.size())
 
@@ -495,7 +497,10 @@ class RelationNetworks(nn.Module):
                 torch.cuda.empty_cache()'''
 
             role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-            role_predict_prob = logsm(role_predict)
+            role_predict_prob = logsm(role_predict, dim=-1)
+            print('role_predict_prob', role_predict_prob.size(), torch.sum(role_predict_prob[0,0]))
+            role_max_prob, role_max_idx = torch.sort(role_predict_prob, -1, True) #batch_sizex6
+            print('sorted labels ', role_max_prob[0,0,:10])
             role_max_prob, role_max_idx = torch.max(role_predict_prob, -1) #batch_sizex6
             #print('role max prob :', role_max_prob.size())
 
@@ -504,20 +509,21 @@ class RelationNetworks(nn.Module):
                 beam_role_idx = []
                 for idx in range(0,batch_size):
                     role_tuple_dict = {}
-                    for r in self.max_role_count:
-                        if roles[idx,r] not in role_tuple_dict:
-                            role_tuple_dict[roles[idx,r]] = (role_max_idx[idx,r], role_max_prob[idx,r])
+                    for r in range(0, self.max_role_count):
+                        if roles[idx,r].item() not in role_tuple_dict:
+                            role_tuple_dict[roles[idx,r].item()] = (role_max_idx[idx,r].item(), role_max_prob[idx,r].item())
                     beam_role_idx.append(role_tuple_dict)
             else:
                 for idx in range(0,batch_size):
                     role_tuple_dict = beam_role_idx[idx]
-                    for r in self.max_role_count:
-                        if roles[idx,r] in role_tuple_dict:
-                            (idx, prob) = role_tuple_dict[roles[idx,r]]
-                            if role_max_prob[idx,r] > prob:
-                                role_tuple_dict[roles[idx,r]] = (role_max_idx[idx,r], role_max_prob[idx,r])
+                    for r in range(0, self.max_role_count):
+                        if roles[idx,r].item() in role_tuple_dict:
+                            (_, prob) = role_tuple_dict[roles[idx,r].item()]
+                            if role_max_prob[idx,r].item() > prob:
+                                #print('probs :' , role_max_prob[idx,r].item(), prob)
+                                role_tuple_dict[roles[idx,r].item()] = (role_max_idx[idx,r].item(), role_max_prob[idx,r].item())
                         else:
-                            role_tuple_dict[roles[idx,r]] = (role_max_idx[idx,r], role_max_prob[idx,r])
+                            role_tuple_dict[roles[idx,r].item()] = (role_max_idx[idx,r].item(), role_max_prob[idx,r].item())
                     beam_role_idx[idx] = role_tuple_dict
 
         print('beam loaders', beam_role_idx)
@@ -535,12 +541,12 @@ class RelationNetworks(nn.Module):
             for index in range(gt_labels.size()[1]):
                 frame_loss = 0
                 verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
-                frame_loss = criterion(role_label_pred[i], gt_labels[i,index])
-                '''for j in range(0, self.max_role_count):
-                    frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,j] ,self.vocab_size)'''
-                #frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
+                #frame_loss = criterion(role_label_pred[i], gt_labels[i,index])
+                for j in range(0, self.max_role_count):
+                    frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,j] ,self.vocab_size)
+                frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
                 #print('frame loss', frame_loss)
-                loss += (frame_loss + verb_loss)
+                loss += frame_loss
 
 
         final_loss = loss/batch_size

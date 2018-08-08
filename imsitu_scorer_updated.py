@@ -98,6 +98,7 @@ class imsitu_scorer():
             gt_role_set = self.encoder.get_role_ids(gt_v)
             #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
+            #print('role sets :', role_set, gt_role_set)
 
 
             new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
@@ -139,11 +140,14 @@ class imsitu_scorer():
                 if found: score_card["value*"] += 1
             '''if self.topk == 1:
                 print('predicted labels :',pred_list)'''
-            if len(pred_list) < len(gt_role_list):
+
+            if len(pred_list) < gt_role_count:
                 all_found = False
             #both verb and all values found
             score_card["value*"] /= gt_role_count
             score_card["value"] /= gt_role_count
+            if all_found:
+                print('all found role sets :pred, gt', role_set, gt_role_set)
             if all_found and verb_found: score_card["value-all"] += 1
             #all values found
             if all_found: score_card["value-all*"] += 1
@@ -266,7 +270,7 @@ class imsitu_scorer():
 
                 g_idx = (gt_role_set == role_id).nonzero()
                 label_id = v[0]
-                pred_list.append(label_id.item())
+                pred_list.append(label_id)
                 found = False
                 for r in range(0,self.nref):
                     gt_label_id = gt_label[r][g_idx]
