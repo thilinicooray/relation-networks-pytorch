@@ -211,7 +211,7 @@ def main():
     lr = 0.001
     lr_max = 5e-4
     lr_gamma = 0.1
-    lr_step = 5
+    lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
