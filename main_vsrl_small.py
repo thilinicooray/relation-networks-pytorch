@@ -17,14 +17,15 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     print_freq = 400
     dev_score_list = []
 
-    if model.gpu_mode >= 0 :
+    '''if model.gpu_mode >= 0 :
         ngpus = 2
         device_array = [i for i in range(0,ngpus)]
 
         pmodel = torch.nn.DataParallel(model, device_ids=device_array)
     else:
-        pmodel = model
-    #pmodel = model
+        pmodel = model'''
+    pmodel = model
+    scheduler.step()
 
     '''if scheduler.get_lr()[0] < lr_max:
         scheduler.step()'''
@@ -210,7 +211,7 @@ def main():
     lr = 0.001
     lr_max = 5e-4
     lr_gamma = 0.1
-    lr_step = 10
+    lr_step = 5
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
@@ -226,11 +227,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
