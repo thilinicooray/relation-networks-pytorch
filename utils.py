@@ -91,10 +91,11 @@ def cross_entropy_loss(pred, target, ignore_index=None):
         #print('no loss')
         return 0
     _x_class = - pred[target]
-    #pred = torch.unsqueeze(pred,1)
-    #print('pred size',pred.size() )
+    pred = torch.unsqueeze(pred,1)
+    print('pred size',pred.size() )
     #max_score, max_i = torch.max(pred)
     score,_ = torch.sort(pred, 0, True)
+
     max_score_broadcast = score[0].view(-1,1).expand(pred.size())
     denom = score[0] + torch.log(torch.sum(torch.exp(pred - max_score_broadcast)))
 
