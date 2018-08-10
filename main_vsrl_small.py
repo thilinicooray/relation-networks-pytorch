@@ -14,7 +14,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 40
     dev_score_list = []
 
     '''if model.gpu_mode >= 0 :
@@ -69,7 +69,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
+            #torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
             '''for param in filter(lambda p: p.requires_grad,model.parameters()):
