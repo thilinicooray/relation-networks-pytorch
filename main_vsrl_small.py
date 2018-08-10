@@ -26,8 +26,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
         pmodel = model'''
     pmodel = model
 
-    if scheduler.get_lr()[0] < lr_max:
-        scheduler.step()
+    '''if scheduler.get_lr()[0] < lr_max:
+        scheduler.step()'''
 
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
@@ -207,9 +207,9 @@ def main():
 
     batch_size = 640
     lr = 5e-6
-    #lr = 0.0001
+    lr = 0.001
     lr_max = 5e-4
-    lr_gamma = 2
+    lr_gamma = 0.1
     lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
