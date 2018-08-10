@@ -14,7 +14,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 40
+    print_freq = 400
     dev_score_list = []
 
     '''if model.gpu_mode >= 0 :
@@ -74,7 +74,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            print('current loss = ', loss)
+            #print('current loss = ', loss)
 
             loss.backward()
 
@@ -159,6 +159,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
+        scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -218,7 +219,7 @@ def main():
     #lr = 5e-6
     lr = 0.0001
     lr_max = 5e-4
-    lr_gamma = 2
+    lr_gamma = 0.1
     lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
