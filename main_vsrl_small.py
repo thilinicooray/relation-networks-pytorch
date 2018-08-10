@@ -66,11 +66,11 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            print('current loss = ', loss)
+            #print('current loss = ', loss)
 
             loss.backward()
 
-            #torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
             '''for param in filter(lambda p: p.requires_grad,model.parameters()):
@@ -124,7 +124,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_small_smalllr.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_small.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -207,8 +207,8 @@ def main():
     args = parser.parse_args()
 
     batch_size = 640
-    lr = 5e-6
-    lr = 0.0001
+    #lr = 5e-6
+    lr = 0.00001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 10
