@@ -14,7 +14,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 40
     dev_score_list = []
 
     '''if model.gpu_mode >= 0 :
