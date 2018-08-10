@@ -42,9 +42,9 @@ class RelationNetworks(nn.Module):
             encoder,
             gpu_mode,
             conv_hidden=24,
-            embed_hidden=512,
-            lstm_hidden=512,
-            mlp_hidden=512
+            embed_hidden=300,
+            lstm_hidden=300,
+            mlp_hidden=256
     ):
         super().__init__()
 
@@ -103,10 +103,10 @@ class RelationNetworks(nn.Module):
         self.f = nn.Sequential(
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden, self.vocab_size),
+            nn.Linear(mlp_hidden*2, self.vocab_size),
         )
         self.conv_hidden = self.conv.base_size()
         self.lstm_hidden = lstm_hidden
