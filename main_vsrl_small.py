@@ -10,11 +10,11 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=8000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 800
+    print_freq = 400
     dev_score_list = []
 
     '''if model.gpu_mode >= 0 :
@@ -208,7 +208,7 @@ def main():
 
     batch_size = 640
     lr = 5e-6
-    lr = 0.001
+    lr = 0.00001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 10
