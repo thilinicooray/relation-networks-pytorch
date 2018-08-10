@@ -57,16 +57,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            print('input img ===================')
-            print(img.size())
-            print('input verb ===================')
-            print(verb.size())
-            print('input roles ===================')
-            print(roles.size())
-            print('input labels ===================')
-            print(labels.size())
-
-
             optimizer.zero_grad()
 
             verb_predict, role_predict = pmodel(img, verb, roles)
@@ -133,7 +123,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_lr0001sched.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_small.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -160,8 +150,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        scheduler.step()
-
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -219,9 +207,9 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.000001
+    lr = 0.0001
     lr_max = 5e-4
-    lr_gamma = 0.1
+    lr_gamma = 2
     lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
