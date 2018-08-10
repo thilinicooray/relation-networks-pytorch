@@ -215,7 +215,7 @@ class imsitu_scorer():
             '''if self.topk == 1:
                 print('predicted labels :',pred_list)'''
             #both verb and all values found
-            if len(pred_list) < len(gt_role_list):
+            if len(pred_list) < gt_role_count:
                 all_found = False
             score_card["value*"] /= gt_role_count
             score_card["value"] /= gt_role_count

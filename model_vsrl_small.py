@@ -44,7 +44,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=512,
             lstm_hidden=512,
-            mlp_hidden=1024
+            mlp_hidden=512
     ):
         super().__init__()
 
@@ -94,19 +94,19 @@ class RelationNetworks(nn.Module):
             nn.ReLU(),
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden*2, mlp_hidden*4),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
         )
 
         self.f = nn.Sequential(
-            nn.Linear(mlp_hidden*4, mlp_hidden*4),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden*4, mlp_hidden*2),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*2, self.vocab_size),
+            nn.Linear(mlp_hidden, self.vocab_size),
         )
         self.conv_hidden = self.conv.base_size()
         self.lstm_hidden = lstm_hidden
@@ -183,7 +183,7 @@ class RelationNetworks(nn.Module):
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
         #print('no issue after g view')
         f = self.f(g)
         #print('no issue after f')
@@ -268,7 +268,7 @@ class RelationNetworks(nn.Module):
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
-        g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+        g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
         #print('no issue after g view')
         f = self.f(g)
         #print('no issue after f')
