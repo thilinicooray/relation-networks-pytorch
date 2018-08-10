@@ -25,7 +25,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     else:
         pmodel = model'''
     pmodel = model
-    scheduler.step()
 
     '''if scheduler.get_lr()[0] < lr_max:
         scheduler.step()'''
@@ -70,7 +69,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
+            #torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
             '''for param in filter(lambda p: p.requires_grad,model.parameters()):
@@ -151,6 +150,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
+        scheduler.step()
+
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
