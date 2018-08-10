@@ -14,7 +14,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 40
     dev_score_list = []
 
     '''if model.gpu_mode >= 0 :
@@ -56,6 +56,16 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 verb = torch.autograd.Variable(verb)
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
+
+            print('input img ===================')
+            print(img.size())
+            print('input verb ===================')
+            print(verb.size())
+            print('input roles ===================')
+            print(roles.size())
+            print('input labels ===================')
+            print(labels.size())
+
 
             optimizer.zero_grad()
 
