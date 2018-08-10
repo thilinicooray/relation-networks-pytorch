@@ -216,7 +216,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.0001
+    lr = 0.00001
     lr_max = 5e-4
     lr_gamma = 2
     lr_step = 10
