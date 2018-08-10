@@ -78,7 +78,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
+            #torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
 
             '''for param in filter(lambda p: p.requires_grad,model.parameters()):
@@ -216,7 +216,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.00001
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 2
     lr_step = 10
