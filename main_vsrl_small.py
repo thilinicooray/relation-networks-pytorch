@@ -59,14 +59,14 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             optimizer.zero_grad()
 
-            print('all inputs')
+            '''print('all inputs')
             print(img)
             print('=========================================================================')
             print(verb)
             print('=========================================================================')
             print(roles)
             print('=========================================================================')
-            print(labels)
+            print(labels)'''
 
             verb_predict, role_predict = pmodel(img, verb, roles)
 
