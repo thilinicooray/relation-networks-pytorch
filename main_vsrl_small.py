@@ -75,7 +75,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
-            #print('current loss = ', loss)
+            print('current loss = ', loss)
 
             loss.backward()
 
