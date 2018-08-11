@@ -362,7 +362,7 @@ class RelationNetworks(nn.Module):
             '''if self.gpu_mode >= 0:
                 torch.cuda.empty_cache()'''
             #print('no issue after g')
-            g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+            g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
             #print('no issue after g view')
             f = self.f(g)
             #print('no issue after f')
