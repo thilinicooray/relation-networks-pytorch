@@ -3,7 +3,7 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_vsrl_small
+import model_vsrl_small_pred
 import os
 import utils
 #from torchviz import make_dot
@@ -232,7 +232,7 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_vsrl_small.RelationNetworks(encoder, args.gpuid)
+    model = model_vsrl_small_pred.RelationNetworks(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
