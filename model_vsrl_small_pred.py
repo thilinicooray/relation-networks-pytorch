@@ -527,7 +527,7 @@ class RelationNetworks(nn.Module):
                             role_tuple_dict[roles[idx,r].item()] = (role_max_idx[idx,r].item(), role_max_prob[idx,r].item())
                     beam_role_idx[idx] = role_tuple_dict
 
-        print('beam loaders', beam_role_idx)
+        #print('beam loaders', beam_role_idx)
 
 
         return verbs, beam_role_idx
