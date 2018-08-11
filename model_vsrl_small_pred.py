@@ -576,10 +576,10 @@ class RelationNetworks(nn.Module):
                         g_idx = (gt_role_list == pred_role_list[j]).nonzero()
                         #print('found idx' , g_idx)
                         frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
-                        print('frame loss', frame_loss, frame_loss.size())
+                        #print('frame loss', frame_loss, frame_loss.size())
 
                 frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
-                print('frame loss', frame_loss)
+                #print('frame loss', frame_loss)
                 loss += frame_loss
 
 
