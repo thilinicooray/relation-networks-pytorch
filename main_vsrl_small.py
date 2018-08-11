@@ -192,11 +192,11 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model.forward_eval(img)
+            verb_predict, role_predict = model.forward_eval_beam(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_eval(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval(verb_predict, verb, role_predict, labels)
+            top1.add_point_eval_beam(verb_predict, verb, role_predict, labels)
+            top5.add_point_eval_beam(verb_predict, verb, role_predict, labels)
 
             del verb_predict, role_predict, img, verb, roles, labels
             #break
