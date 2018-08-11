@@ -44,7 +44,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=512
+            mlp_hidden=256
     ):
         super().__init__()
 
@@ -77,10 +77,10 @@ class RelationNetworks(nn.Module):
         self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden, self.n_verbs),
+            nn.Linear(mlp_hidden*2, self.n_verbs),
         )
 
         self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
@@ -103,10 +103,10 @@ class RelationNetworks(nn.Module):
         self.f = nn.Sequential(
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden, self.vocab_size),
+            nn.Linear(mlp_hidden*2, self.vocab_size),
         )
         self.conv_hidden = self.conv.base_size()
         self.lstm_hidden = lstm_hidden
