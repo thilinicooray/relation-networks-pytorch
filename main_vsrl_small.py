@@ -10,7 +10,7 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=2):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -192,11 +192,11 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model.forward_eval_beam(img)
+            verb_predict, role_predict = model.forward_eval_rolebeam(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_eval_beam(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval_beam(verb_predict, verb, role_predict, labels)
+            top1.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
+            top5.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
 
             del verb_predict, role_predict, img, verb, roles, labels
             #break
