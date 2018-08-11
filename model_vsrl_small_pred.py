@@ -384,7 +384,7 @@ class RelationNetworks(nn.Module):
                 beam_role_idx = torch.cat((beam_role_idx.clone(), role_max_idx), 1)
                 beam_joint_prob = torch.cat((beam_joint_prob.clone(), torch.unsqueeze(situation_joint_prob,1)), 1)
 
-        #print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
+        print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
 
         sorted_prob, sorted_joint_idx = torch.sort(beam_joint_prob, 1, True)
         #print('joint prob ', beam_joint_prob)
@@ -398,6 +398,7 @@ class RelationNetworks(nn.Module):
             #print('ordered verbs ', verbs_ordered)
             sorted_beam_verb_ids.append(verbs_ordered)
             max_i = sorted_order[0]
+            print('max i', max_i)
 
             label_ids = beam_role_idx[i][6*max_i:6*(max_i+1)]
             #print('role place ', max_i, 6*max_i, 6*(max_i+1), label_ids)
@@ -488,7 +489,7 @@ class RelationNetworks(nn.Module):
             '''if self.gpu_mode >= 0:
                 torch.cuda.empty_cache()'''
             #print('no issue after g')
-            g = g.view(-1, n_pair * n_pair, self.mlp_hidden*4).sum(1).squeeze()
+            g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
             #print('no issue after g view')
             f = self.f(g)
             #print('no issue after f')
