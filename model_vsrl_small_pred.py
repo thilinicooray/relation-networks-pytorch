@@ -282,7 +282,7 @@ class RelationNetworks(nn.Module):
 
         return verb_pred, role_predict
 
-    def forward_eval_beam(self, image, beam=5):
+    def forward_eval_beam(self, image, beam=10):
         conv_org = self.conv(image)
 
 
