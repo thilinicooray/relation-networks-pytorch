@@ -289,7 +289,7 @@ class RelationNetworks(nn.Module):
 
         #verb pred
         verb_pred = self.verb(conv_org.view(-1, 7*7*self.conv.base_size()))
-        verb_pred_prob = F.softmax(verb_pred, dim=-1)
+        verb_pred_prob = torch.log(F.softmax(verb_pred, dim=-1))
         #print('verb pred', verb_pred.size())
         sorted_prob, sorted_idx = torch.sort(verb_pred_prob, 1, True)
         #print('sorted ', sorted_idx.size())
@@ -370,11 +370,11 @@ class RelationNetworks(nn.Module):
                 torch.cuda.empty_cache()'''
 
             role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-            role_predict_prob = F.softmax(role_predict, dim=-1)
+            role_predict_prob = torch.log(F.softmax(role_predict, dim=-1))
             role_max_prob, role_max_idx = torch.max(role_predict_prob, -1) #batch_sizex6
             #print('role max prob :', role_max_prob.size())
             all_situation_prob = torch.cat((torch.unsqueeze(beam_verb_prob[:,b],1), role_max_prob),1)
-            situation_joint_prob = torch.mul(all_situation_prob,1)
+            situation_joint_prob = torch.sum(all_situation_prob,1)
 
             if b == 0:
                 beam_role_idx = role_max_idx

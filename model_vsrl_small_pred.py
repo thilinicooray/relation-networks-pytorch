@@ -289,7 +289,7 @@ class RelationNetworks(nn.Module):
 
         #verb pred
         verb_pred = self.verb(conv_org.view(-1, 7*7*self.conv.base_size()))
-        verb_pred_prob = F.softmax(verb_pred, dim=-1)
+        verb_pred_prob = torch.log(F.softmax(verb_pred, dim=-1))
         #print('verb pred', verb_pred.size())
         sorted_prob, sorted_idx = torch.sort(verb_pred_prob, 1, True)
         #print('sorted ', sorted_idx.size())
@@ -370,11 +370,12 @@ class RelationNetworks(nn.Module):
                 torch.cuda.empty_cache()'''
 
             role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
-            role_predict_prob = F.softmax(role_predict, dim=-1)
+            role_predict_prob = torch.log(F.softmax(role_predict, dim=-1))
             role_max_prob, role_max_idx = torch.max(role_predict_prob, -1) #batch_sizex6
             #print('role max prob :', role_max_prob.size())
             all_situation_prob = torch.cat((torch.unsqueeze(beam_verb_prob[:,b],1), role_max_prob),1)
-            situation_joint_prob = torch.mul(all_situation_prob,1)
+
+            situation_joint_prob = torch.sum(all_situation_prob,1)
 
             if b == 0:
                 beam_role_idx = role_max_idx
@@ -384,7 +385,7 @@ class RelationNetworks(nn.Module):
                 beam_role_idx = torch.cat((beam_role_idx.clone(), role_max_idx), 1)
                 beam_joint_prob = torch.cat((beam_joint_prob.clone(), torch.unsqueeze(situation_joint_prob,1)), 1)
 
-        print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
+        #print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
 
         sorted_prob, sorted_joint_idx = torch.sort(beam_joint_prob, 1, True)
         #print('joint prob ', beam_joint_prob)
@@ -398,7 +399,7 @@ class RelationNetworks(nn.Module):
             #print('ordered verbs ', verbs_ordered)
             sorted_beam_verb_ids.append(verbs_ordered)
             max_i = sorted_order[0]
-            print('max i', max_i)
+            #print('max i', max_i)
 
             label_ids = beam_role_idx[i][6*max_i:6*(max_i+1)]
             #print('role place ', max_i, 6*max_i, 6*(max_i+1), label_ids)
