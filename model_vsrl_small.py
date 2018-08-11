@@ -103,7 +103,7 @@ class RelationNetworks(nn.Module):
         self.f = nn.Sequential(
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden, self.vocab_size),
