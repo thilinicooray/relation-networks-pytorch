@@ -227,9 +227,11 @@ class NoamOpt:
         "Implement `lrate` above"
         if step is None:
             step = self._step
-        return self.factor * \
+        rate = self.factor * \
                (self.model_size ** (-0.5) *
                 min(step ** (-0.5), step * self.warmup ** (-1.5)))
+        print('current rate :', rate)
+        return rate
 
     '''
     model_opt = NoamOpt(model.src_embed[0].d_model, 1, 400,
