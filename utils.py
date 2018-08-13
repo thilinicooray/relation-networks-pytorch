@@ -230,7 +230,8 @@ class NoamOpt:
         rate = self.factor * \
                (self.model_size ** (-0.5) *
                 min(step ** (-0.5), step * self.warmup ** (-1.5)))
-        #print('current rate :', rate)
+        if step % 400 == 0:
+            print('current rate :', rate)
         return rate
 
     '''
