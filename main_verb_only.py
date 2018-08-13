@@ -132,7 +132,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_00001static.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only512_transfopt.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -255,7 +255,7 @@ def main():
         model.cuda()
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = utils.NoamOpt(512, 2, 6000,
+    optimizer = utils.NoamOpt(512, 2, 1100,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
