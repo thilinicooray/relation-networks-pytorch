@@ -10,7 +10,7 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=10):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, eval_frequency=4000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -132,7 +132,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_small256_out512_0001_gt_train.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -199,7 +199,7 @@ def eval(model, dev_loader, encoder, gpu_mode):
             top5.add_point_eval_5(verb_predict, verb, role_predict, labels)
 
             del verb_predict, role_predict, img, verb, roles, labels
-            break
+            #break
 
     #return top1, top5, val_loss/mx
 
@@ -246,11 +246,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=30, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=30, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
@@ -264,6 +264,7 @@ def main():
             raise Exception('[pretrained verb module] not specified')
         utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
         optimizer_select = 1
+        model_name = 'cfx_vfx_rtrain'
 
     elif args.finetune_verb:
         print('CNN fix, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
@@ -272,14 +273,16 @@ def main():
             raise Exception('[pretrained verb module] not specified')
         utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
         optimizer_select = 2
+        model_name = 'cfx_vft_rtrain'
 
     elif args.finetune_cnn:
-        print('CNN fix, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
+        print('CNN finetune, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
         args.train_all = True
         if len(args.verb_module) == 0:
             raise Exception('[pretrained verb module] not specified')
         utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
         optimizer_select = 3
+        model_name = 'cft_vft_rtrain'
 
     elif args.resume_training:
         print('Resume training from: {}'.format(args.resume_model))
@@ -288,10 +291,12 @@ def main():
             raise Exception('[pretrained verb module] not specified')
         utils.load_net(args.resume_model, [model])
         optimizer_select = 0
+        model_name = 'resume_all'
     else:
-        print('Training from scratch.')
+        print('Training from the scratch.')
         optimizer_select = 0
         args.train_all = True
+        model_name = 'train_full'
 
     optimizer = utils.get_optimizer(lr,weight_decay,optimizer_select,
                                       cnn_features, verb_features, role_features)
@@ -308,7 +313,7 @@ def main():
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name)
 
 
 
