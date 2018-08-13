@@ -203,12 +203,12 @@ class imsitu_scorer():
                 current_role = self.encoder.role_list[role_id]
                 if current_role not in gt_role_list:
                     continue
-                g_idx = (gt_role_set == role_id).nonzero()
-                label_id = label_pred[k]
+
+                label_id = torch.max(label_pred[k],0)[1]
                 pred_list.append(label_id.item())
                 found = False
                 for r in range(0,self.nref):
-                    gt_label_id = gt_label[r][g_idx]
+                    gt_label_id = gt_label[r][k]
                     #print('ground truth label id = ', gt_label_id)
                     if label_id == gt_label_id:
                         found = True
@@ -222,8 +222,8 @@ class imsitu_scorer():
             '''if self.topk == 1:
                 print('predicted labels :',pred_list)'''
             #both verb and all values found
-            if len(pred_list) < gt_role_count:
-                all_found = False
+            '''if len(pred_list) < gt_role_count:
+                all_found = False'''
             #score_card["value*"] /= gt_role_count
             score_card["value"] /= gt_role_count
             if all_found and verb_found: score_card["value-all"] += 1

@@ -116,3 +116,91 @@ def likelihood(pred, target, ignore_index=None):
 
     return likelihood
 
+def group_features(net_):
+
+    cnn_features = list(net_.conv.parameters())
+    cnn_feature_len = len(list(net_.conv.parameters()))
+    verb_features = list(net_.verb.parameters())
+    verb_feature_len = len(list(net_.verb.parameters()))
+    role_features = list(net_.parameters())[(cnn_feature_len + verb_feature_len):]
+
+    print('Network details :')
+    print('\tcnn features :', cnn_feature_len)
+    print('\tverb features :', verb_feature_len)
+    print('\trole features :', len(role_features))
+
+
+    return cnn_features, verb_features, role_features
+
+
+def set_trainable(model, requires_grad):
+    set_trainable_param(model.parameters(), requires_grad)
+
+def set_trainable_param(parameters, requires_grad):
+    for param in parameters:
+        param.requires_grad = requires_grad
+
+def get_optimizer(lr, decay, mode, cnn_features, verb_features, role_features):
+    """ To get the optimizer
+    mode 0: training from scratch
+    mode 1: cnn fix, verb fix, role training
+    mode 2: cnn fix, verb fine tune, role training
+    mode 3: cnn finetune, verb finetune, role training"""
+    if mode == 0:
+        set_trainable_param(cnn_features, True)
+        set_trainable_param(verb_features, True)
+        set_trainable_param(role_features, True)
+        optimizer = torch.optim.Adam([
+            {'params': cnn_features, 'lr': lr * 0.1},
+            {'params': verb_features, 'lr': lr * 0.1},
+            {'params': role_features}
+        ], lr=lr, weight_decay=decay)
+
+    elif mode == 1:
+        set_trainable_param(role_features, True)
+        optimizer = torch.optim.Adam([
+                {'params': role_features}
+            ], lr=lr, weight_decay=decay)
+
+    elif mode == 2:
+        set_trainable_param(verb_features, True)
+        set_trainable_param(role_features, True)
+        optimizer = torch.optim.Adam([
+                {'params': verb_features, 'lr': lr * 0.1},
+                {'params': role_features}
+            ], lr=lr, weight_decay=decay)
+
+    elif mode == 3:
+        set_trainable_param(cnn_features, True)
+        set_trainable_param(verb_features, True)
+        set_trainable_param(role_features, True)
+        optimizer = torch.optim.Adam([
+            {'params': cnn_features, 'lr': lr * 0.1},
+            {'params': verb_features, 'lr': lr * 0.1},
+            {'params': role_features}
+        ], lr=lr, weight_decay=decay)
+
+    return optimizer
+
+def load_net(fname, net_list, prefix_list = None):
+    need_modification = False
+    if prefix_list is not None and len(prefix_list) > 0:
+        need_modification = True
+    for i in range(0, len(net_list)):
+
+        dict = torch.load(fname)
+        try:
+            for k, v in net_list[i].state_dict().items():
+                if need_modification:
+                    k = prefix_list[i] + '.' + k
+                if k in dict:
+                    param = torch.from_numpy(np.asarray(dict[k]))
+                    v.copy_(param)
+                    #print('[Copied]: {}'.format(k))
+                else:
+                    print('[Missed]: {}'.format(k))
+        except Exception as e:
+            pdb.set_trace()
+            print ('[Loaded net not complete] Parameter[{}] Size Mismatch...'.format(k))
+
+

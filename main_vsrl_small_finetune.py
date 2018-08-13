@@ -3,14 +3,14 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_verb_small
+import model_vsrl_small
 import os
 import utils
 #from torchviz import make_dot
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=10):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -68,12 +68,12 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print('=========================================================================')
             print(labels)'''
 
-            verb_predict = pmodel(img)
+            verb_predict, role_predict = pmodel(img, verb, roles)
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb)
+            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
             #print('current loss = ', loss)
 
             loss.backward()
@@ -99,8 +99,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             train_loss += loss.item()
 
-            top1.add_point_verb_only(verb_predict, verb)
-            top5.add_point_verb_only(verb_predict, verb)
+            top1.add_point(verb_predict, verb, role_predict, labels)
+            top5.add_point(verb_predict, verb, role_predict, labels)
 
 
             if total_steps % print_freq == 0:
@@ -119,7 +119,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top1_avg = top1.get_average_results()
                 top5_avg = top5.get_average_results()
 
-                avg_score = top1_avg["verb"] + top5_avg["verb"]
+                avg_score = top1_avg["verb"] + top1_avg["value"] + top1_avg["value-all"] + top5_avg["verb"] + \
+                            top5_avg["value"] + top5_avg["value-all"]
                 avg_score /= 8
 
                 print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
@@ -131,7 +132,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_small256_out512_0001_gt_train.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -155,7 +156,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top1 = imsitu_scorer(encoder, 1, 3)
                 top5 = imsitu_scorer(encoder, 5, 3)
 
-            del verb_predict, loss, img, verb, roles, labels
+            del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
         scheduler.step()
@@ -191,13 +192,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict = model(img)
+            verb_predict, role_predict = model.forward_eval_5(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_verb_only(verb_predict, verb)
-            top5.add_point_verb_only(verb_predict, verb)
+            top1.add_point_eval_5(verb_predict, verb, role_predict, labels)
+            top5.add_point_eval_5(verb_predict, verb, role_predict, labels)
 
-            del verb_predict, img, verb, roles, labels
+            del verb_predict, role_predict, img, verb, roles, labels
             break
 
     #return top1, top5, val_loss/mx
@@ -209,14 +210,21 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
-    parser.add_argument("--command", choices = ["train", "eval", "resume", 'predict'], required = True)
-    parser.add_argument("--weights_file", help="the model to start from")
+    #parser.add_argument("--command", choices = ["train", "eval", "resume", 'predict'], required = True)
+    parser.add_argument('--resume_training', action='store_true', help='Resume training from the model [resume_model]')
+    parser.add_argument('--resume_model', type=str, default='', help='The model we resume')
+    parser.add_argument('--verb_module', type=str, default='', help='pretrained verb module')
+    parser.add_argument('--train_role', action='store_true', help='cnn fix, verb fix, role train from the scratch')
+    parser.add_argument('--finetune_verb', action='store_true', help='cnn fix, verb finetune, role train from the scratch')
+    parser.add_argument('--finetune_cnn', action='store_true', help='cnn finetune, verb finetune, role train from the scratch')
+    parser.add_argument('--output_dir', type=str, default='./trained_models', help='Location to output the model')
+    #todo: train role module separately with gt verbs
 
     args = parser.parse_args()
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.00001
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 20
@@ -225,40 +233,82 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    dataset_folder = 'imSitu'
-    imgset_folder = 'resized_256'
+    dataset_folder = 'imsitu_data'
+    imgset_folder = 'of500_images_resized'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_verb_small.RelationNetworks(encoder, args.gpuid)
+    model = model_vsrl_small.RelationNetworks(encoder, args.gpuid)
+
+    # To group up the features
+    cnn_features, verb_features, role_features = utils.group_features(model)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
     traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
 
-    if args.command == "resume":
-        print ("loading model weights...")
-        model.load_state_dict(torch.load(args.weights_file))
+    utils.set_trainable(model, False)
+    if args.train_role:
+        print('CNN fix, Verb fix, train role from the scratch from: {}'.format(args.verb_module))
+        args.train_all = False
+        if len(args.verb_module) == 0:
+            raise Exception('[pretrained verb module] not specified')
+        utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
+        optimizer_select = 1
+
+    elif args.finetune_verb:
+        print('CNN fix, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
+        args.train_all = False
+        if len(args.verb_module) == 0:
+            raise Exception('[pretrained verb module] not specified')
+        utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
+        optimizer_select = 2
+
+    elif args.finetune_cnn:
+        print('CNN fix, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
+        args.train_all = True
+        if len(args.verb_module) == 0:
+            raise Exception('[pretrained verb module] not specified')
+        utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
+        optimizer_select = 3
+
+    elif args.resume_training:
+        print('Resume training from: {}'.format(args.resume_model))
+        args.train_all = True
+        if len(args.resume_model) == 0:
+            raise Exception('[pretrained verb module] not specified')
+        utils.load_net(args.resume_model, [model])
+        optimizer_select = 0
+    else:
+        print('Training from scratch.')
+        optimizer_select = 0
+        args.train_all = True
+
+    optimizer = utils.get_optimizer(lr,weight_decay,optimizer_select,
+                                      cnn_features, verb_features, role_features)
+
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
 
     if args.gpuid >= 0:
         #print('GPU enabled')
         model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max)
 
 
 
