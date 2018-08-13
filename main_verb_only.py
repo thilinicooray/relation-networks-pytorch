@@ -57,7 +57,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
 
             '''print('all inputs')
             print(img)
@@ -87,8 +87,9 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-
             optimizer.step()
+            optimizer.optimizer.zero_grad()
+            #optimizer.step()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -253,7 +254,9 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = utils.NoamOpt(512, 2, 6000,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
