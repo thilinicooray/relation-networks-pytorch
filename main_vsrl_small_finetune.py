@@ -10,7 +10,7 @@ import utils
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, args,eval_frequency=4000):
     model.train()
     train_loss = 0
     total_steps = 0
@@ -73,7 +73,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            loss = model.calculate_loss(verb_predict, verb, role_predict, labels, args)
             #print('current loss = ', loss)
 
             loss.backward()
@@ -268,7 +268,7 @@ def main():
 
     elif args.finetune_verb:
         print('CNN fix, Verb finetune, train role from the scratch from: {}'.format(args.verb_module))
-        args.train_all = False
+        args.train_all = True
         if len(args.verb_module) == 0:
             raise Exception('[pretrained verb module] not specified')
         utils.load_net(args.verb_module, [model.conv, model.verb], ['conv', 'verb'])
@@ -313,7 +313,7 @@ def main():
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
 
 
 
