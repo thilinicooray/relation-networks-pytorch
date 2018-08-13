@@ -3,7 +3,7 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_vsrl_small
+import model_verb_small
 import os
 import utils
 #from torchviz import make_dot
@@ -68,12 +68,12 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print('=========================================================================')
             print(labels)'''
 
-            verb_predict, role_predict = pmodel(img, verb, roles)
+            verb_predict = pmodel(img)
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            loss = model.calculate_loss(verb_predict, verb)
             #print('current loss = ', loss)
 
             loss.backward()
@@ -99,8 +99,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
             train_loss += loss.item()
 
-            top1.add_point(verb_predict, verb, role_predict, labels)
-            top5.add_point(verb_predict, verb, role_predict, labels)
+            top1.add_point_verb_only(verb_predict, verb)
+            top5.add_point_verb_only(verb_predict, verb)
 
 
             if total_steps % print_freq == 0:
@@ -119,8 +119,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top1_avg = top1.get_average_results()
                 top5_avg = top5.get_average_results()
 
-                avg_score = top1_avg["verb"] + top1_avg["value"] + top1_avg["value-all"] + top5_avg["verb"] + \
-                            top5_avg["value"] + top5_avg["value-all"] + top5_avg["value*"] + top5_avg["value-all*"]
+                avg_score = top1_avg["verb"] + top5_avg["verb"]
                 avg_score /= 8
 
                 print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
@@ -132,7 +131,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_small512.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -156,7 +155,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top1 = imsitu_scorer(encoder, 1, 3)
                 top5 = imsitu_scorer(encoder, 5, 3)
 
-            del verb_predict, role_predict, loss, img, verb, roles, labels
+            del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
         scheduler.step()
@@ -192,13 +191,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model.forward_eval(img)
+            verb_predict = model(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
+            top1.add_point_verb_only(verb_predict, verb)
+            top5.add_point_verb_only(verb_predict, verb)
 
-            del verb_predict, role_predict, img, verb, roles, labels
+            del verb_predict, img, verb, roles, labels
             #break
 
     #return top1, top5, val_loss/mx
@@ -232,15 +231,15 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_vsrl_small.RelationNetworks(encoder, args.gpuid)
+    model = model_verb_small.RelationNetworks(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
