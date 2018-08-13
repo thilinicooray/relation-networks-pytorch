@@ -255,7 +255,7 @@ def main():
         model.cuda()
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = utils.NoamOpt(512, 1, 4000,
+    optimizer = utils.NoamOpt(512, 1, 15000,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
