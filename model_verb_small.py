@@ -44,14 +44,14 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=256
+            mlp_hidden=512
     ):
         super().__init__()
 
         self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         self.train_transform = tv.transforms.Compose([
-            tv.transforms.Resize(224),
+            #tv.transforms.Resize(224),
             tv.transforms.RandomCrop(224),
             tv.transforms.RandomHorizontalFlip(),
             tv.transforms.ToTensor(),
