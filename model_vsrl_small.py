@@ -387,7 +387,7 @@ class RelationNetworks(nn.Module):
                 #beam_joint_prob = torch.cat((beam_joint_prob.clone(), torch.unsqueeze(situation_joint_prob,1)), 1)
 
         #print('sizes of beam loaders', verbs.size(), beam_role_idx.size(), beam_joint_prob.size())
-        print('beam ', verbs.size(), beam_role_idx.size())
+        #print('beam ', verbs.size(), beam_role_idx.size())
         return verbs, beam_role_idx
 
     def forward_eval_beam(self, image, beam=5):
