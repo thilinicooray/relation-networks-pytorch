@@ -239,10 +239,13 @@ class NoamOpt:
             step = self._step
         factor = self.factor
         if step % self.warmup == 0:
-            factor = factor*(10**3)
+            #factor = factor*(10**2)
+            return 0.01
         rate = factor * \
                (self.model_size ** (-0.5) *
-                min(step ** (-0.5), step * self.warmup ** (-1.5)))
+                min(step ** (-0.5), (step%self.warmup + 30) * self.warmup ** (-1.5)))
+        if step % self.warmup == 0:
+            print(rate)
         return rate
 
     '''
