@@ -262,7 +262,7 @@ def main():
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, None, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
 
 
 
