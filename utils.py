@@ -222,7 +222,7 @@ class NoamOpt:
             p['lr'] = rate
         self._rate = rate
         self.optimizer.step()
-
+    #original
     '''def rate(self, step = None):
         "Implement `lrate` above"
         if step is None:
@@ -233,6 +233,22 @@ class NoamOpt:
         if step % 400 == 0:
             print('current rate :', rate)
         return rate'''
+    #added restart
+    '''def rate(self, step = None):
+        "Implement `lrate` above"
+        if step is None:
+            step = self._step
+        factor = self.factor
+        if step % self.warmup == 0:
+            #factor = factor*(10**2)
+            return 0.1
+        rate = factor * \
+               (self.model_size ** (-0.5) *
+                min(step ** (-0.5), (step%self.warmup + 30) * self.warmup ** (-1.5)))
+        if step % self.warmup == 0:
+            print(rate)
+        return rate'''
+    #no min operation, always start from the beginning
     def rate(self, step = None):
         "Implement `lrate` above"
         if step is None:
@@ -240,12 +256,13 @@ class NoamOpt:
         factor = self.factor
         if step % self.warmup == 0:
             #factor = factor*(10**2)
-            return 0.01
+            return 0.1
         rate = factor * \
                (self.model_size ** (-0.5) *
-                min(step ** (-0.5), (step%self.warmup + 30) * self.warmup ** (-1.5)))
+                (step%self.warmup + 30) * self.warmup ** (-1.5))
         if step % self.warmup == 0:
             print(rate)
+        #print('rate :', rate)
         return rate
 
     '''
