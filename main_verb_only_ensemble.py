@@ -106,6 +106,14 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             top1.add_point_verb_only(verb_predict, verb)
             top5.add_point_verb_only(verb_predict, verb)
 
+            if total_steps % print_freq == 0:
+                top1_a = top1.get_average_results()
+                top5_a = top5.get_average_results()
+                print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
+                       .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
+                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.item(),
+                               train_loss / ((total_steps-1)%eval_frequency) ))
+
             if total_steps % checkpoint_at == 0:
                 #assuming this is the best model at each cycle
                 checkpoint_number = math.ceil(total_steps/checkpoint_at)
@@ -131,13 +139,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 top1 = imsitu_scorer(encoder, 1, 3)
                 top5 = imsitu_scorer(encoder, 5, 3)
 
-            if total_steps % print_freq == 0:
-                top1_a = top1.get_average_results()
-                top5_a = top5.get_average_results()
-                print ("{},{},{}, {} , {}, loss = {:.2f}, avg loss = {:.2f}"
-                       .format(total_steps-1,epoch,i, utils.format_dict(top1_a, "{:.2f}", "1-"),
-                               utils.format_dict(top5_a,"{:.2f}","5-"), loss.item(),
-                               train_loss / ((total_steps-1)%eval_frequency) ))
+
 
             del verb_predict, loss, img, verb, roles, labels
             #break
@@ -190,9 +192,9 @@ def eval(model, checkpoint_list, model_dir, model_name, dev_loader, encoder, gpu
                     verb_predict = torch.cat((verb_predict.clone(), model(img)), 1)
 
             verb_pred_all = verb_predict.view(batch_size, -1, verb_count)
-            print('verb_pred_all', verb_pred_all.size())
+            #print('verb_pred_all', verb_pred_all.size())
             ensemble = torch.mean(verb_pred_all,1)
-            print('ensemble', ensemble.size())
+            #print('ensemble', ensemble.size())
 
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
@@ -227,7 +229,7 @@ def main():
     n_epoch = 50
     n_worker = 3
 
-    print('LR scheme : cosine annealing wr alpha_0, T, M', 0.2, 1200000, 50)
+    print('LR scheme : cosine annealing ensemble wr alpha_0, T, M', 0.1, 1200000, 100)
 
     dataset_folder = 'imsitu_data'
     imgset_folder = 'of500_images_resized'
@@ -239,11 +241,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=4, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
@@ -258,11 +260,11 @@ def main():
         model.cuda()
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = utils.CosineAnnealingWR(0.1,1000 , 10,
+    optimizer = utils.CosineAnnealingWR(0.1,1200000 , 100,
                                         torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
-    checkpoint_at = math.ceil(1000/10)
+    checkpoint_at = math.ceil(1200000/100)
 
     print('Model training started!')
     train(model, train_loader, dev_loader, traindev_loader, optimizer, None, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max, checkpoint_at)

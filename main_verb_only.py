@@ -26,9 +26,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
         pmodel = model'''
     pmodel = model
 
-    '''if scheduler.get_lr()[0] < lr_max:
-        scheduler.step()'''
-
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
@@ -87,10 +84,10 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-            optimizer.step()
-            optimizer.optimizer.zero_grad()
             #optimizer.step()
-            #optimizer.zero_grad()
+            #optimizer.optimizer.zero_grad()
+            optimizer.step()
+            optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -133,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_negexpwr_p2_100cy.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_increase.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -160,6 +157,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
+        if scheduler.get_lr()[0] < lr_max:
+            scheduler.step()
         #scheduler.step()
         #break
 
@@ -217,17 +216,17 @@ def main():
     args = parser.parse_args()
 
     batch_size = 640
-    #lr = 5e-6
-    lr = 0.00001
-    lr_max = 5e-4
-    lr_gamma = 0.1
-    lr_step = 15
+    lr = 5e-6
+    #lr = 0.00001
+    lr_max = 1e-4
+    lr_gamma = 2
+    lr_step = 10
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : cosine annealing wr alpha_0, T, M', 0.1, 1200000, 100)
+    print('LR scheme : increasing start, max, gamma, step', 5e-6, 1e-4, 2,10)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -257,14 +256,14 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = utils.CosineAnnealingWR(0.1,1200000 , 100,
-            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    '''optimizer = utils.CosineAnnealingWR(0.1,1200000 , 100,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, None, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
 
 
 
