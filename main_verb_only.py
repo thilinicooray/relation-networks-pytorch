@@ -87,10 +87,10 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-            #optimizer.step()
-            #optimizer.optimizer.zero_grad()
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.optimizer.zero_grad()
+            #optimizer.step()
+            #optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -133,7 +133,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_static_b32.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_trans_8kwarmup.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -227,7 +227,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme :lr, decay, decay step, weight decay ', lr, 1,-1,weight_decay)
+    print('LR scheme :transformer warmup, factor, size ', 8000, 0.1, 256)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -257,14 +257,14 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    '''optimizer = utils.NoamOpt(512, 0.2, 4000,
-            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = utils.NoamOpt(256, 0.1, 8000,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, None, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
 
 
 
