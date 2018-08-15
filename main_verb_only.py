@@ -84,10 +84,10 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-            #optimizer.step()
-            #optimizer.optimizer.zero_grad()
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.optimizer.zero_grad()
+            #optimizer.step()
+            #optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -130,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_increase.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_neg_exp.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -157,8 +157,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        if scheduler.get_lr()[0] < lr_max:
-            scheduler.step()
+        '''if scheduler.get_lr()[0] < lr_max:
+            scheduler.step()'''
         #scheduler.step()
         #break
 
@@ -257,8 +257,8 @@ def main():
         model.cuda()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    '''optimizer = utils.CosineAnnealingWR(0.1,1200000 , 100,
-            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
+    optimizer = utils.negative_expoWR(0.01,1200000 , 50,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 

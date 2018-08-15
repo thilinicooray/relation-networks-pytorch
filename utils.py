@@ -299,7 +299,7 @@ class CosineAnnealingWR:
         rate = (self.alpha_0/2) * (math.cos((math.pi * ((step-1)%math.ceil(self.T/self.M)))/math.ceil(self.T/self.M)) + 1)
         #print('rate')
         #if step % 400 == 0:
-        print('current rate :', rate)
+        #print('current rate :', rate)
 
         return rate
 
@@ -330,7 +330,7 @@ class negative_expoWR:
         rate = (self.alpha_0/2) * (math.exp(-(math.pi * ((step-1)%math.ceil(self.T/self.M)))/math.ceil(self.T/self.M)) + 1)
         #print('rate')
         #if step % 400 == 0:
-        print('current rate :', rate)
+        #print('current rate :', rate)
 
         return rate
 
