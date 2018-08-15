@@ -133,7 +133,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_sched_b32.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_static_b32.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -160,7 +160,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        scheduler.step()
+        #scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -227,7 +227,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme :lr, decay, decay step, weight decay ', lr, lr_gamma,lr_step,weight_decay)
+    print('LR scheme :lr, decay, decay step, weight decay ', lr, 1,-1,weight_decay)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
