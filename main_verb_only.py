@@ -229,8 +229,8 @@ def main():
 
     print('LR scheme : cosine annealing wr alpha_0, T, M', 0.1, 1200000, 100)
 
-    dataset_folder = 'imsitu_data'
-    imgset_folder = 'of500_images_resized'
+    dataset_folder = 'imSitu'
+    imgset_folder = 'resized_256'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
