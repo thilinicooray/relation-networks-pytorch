@@ -44,7 +44,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=512
+            mlp_hidden=256
     ):
         super().__init__()
 

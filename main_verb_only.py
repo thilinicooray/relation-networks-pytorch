@@ -133,7 +133,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only512_sched_b64.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_sched_b32.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -221,11 +221,13 @@ def main():
     lr = 0.00001
     lr_max = 5e-4
     lr_gamma = 0.1
-    lr_step = 20
+    lr_step = 15
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
     n_worker = 3
+
+    print('LR scheme :lr, decay, decay step, weight decay ', lr, lr_gamma,lr_step,weight_decay)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -237,11 +239,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
