@@ -133,7 +133,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_cosanwr_p2.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_cosanwr_p2_100cy.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -227,7 +227,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : cosine annealing wr alpha_0, T, M', 0.2, 1200000, 50)
+    print('LR scheme : cosine annealing wr alpha_0, T, M', 0.1, 1200000, 100)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -258,7 +258,7 @@ def main():
         model.cuda()
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = utils.CosineAnnealingWR(0.2,1200000 , 50,
+    optimizer = utils.CosineAnnealingWR(0.1,1200000 , 100,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
