@@ -288,19 +288,18 @@ class CosineAnnealingWR:
         rate = self.rate()
         for p in self.optimizer.param_groups:
             p['lr'] = rate
-        self.alpha_0 = self.alpha_t
-        self.alpha_t = rate
+        self.alpha_0 = rate
         self.optimizer.step()
     #original
     def rate(self, step = None):
         "Implement `lrate` above"
         if step is None:
             step = self.t
-
+        #print('alpha 0 :', self.alpha_0)
         rate = (self.alpha_0/2) * (math.cos((math.pi * ((step-1)%math.ceil(self.T/self.M)))/math.ceil(self.T/self.M)) + 1)
         #print('rate')
         #if step % 400 == 0:
-            #print('current rate :', rate)
+        #print('current rate :', rate)
 
         return rate
 
@@ -320,19 +319,18 @@ class negative_expoWR:
         rate = self.rate()
         for p in self.optimizer.param_groups:
             p['lr'] = rate
-        self.alpha_0 = self.alpha_t
-        self.alpha_t = rate
+        self.alpha_0 = rate
         self.optimizer.step()
     #original
     def rate(self, step = None):
         "Implement `lrate` above"
         if step is None:
             step = self.t
-
+        #print('alpha 0 :', self.alpha_0)
         rate = (self.alpha_0/2) * (math.exp(-(math.pi * ((step-1)%math.ceil(self.T/self.M)))/math.ceil(self.T/self.M)) + 1)
         #print('rate')
         #if step % 400 == 0:
-        print('current rate :', rate)
+        #print('current rate :', rate)
 
         return rate
 
