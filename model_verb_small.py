@@ -74,11 +74,14 @@ class RelationNetworks(nn.Module):
 
         self.conv = resnet_modified_small()
 
-        self.verb = nn.Sequential(
+        '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden*2, self.n_verbs),
+        )'''
+        self.verb = nn.Sequential(
+            nn.Linear(7*7*self.conv.base_size(), self.n_verbs),
         )
 
         '''self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
