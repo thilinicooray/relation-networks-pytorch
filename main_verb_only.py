@@ -130,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_increaselr_b64_.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only512_reduce1fc__increaselr_b64_.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -226,7 +226,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : lr increase', 5e-6, 5e-4, 2,20)
+    print('LR scheme : lr increase, reduce 1 fc layer', 5e-6, 5e-4, 2,20)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
