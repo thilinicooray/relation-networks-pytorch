@@ -130,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_cosine_.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only256_increaselr_b64_.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -157,8 +157,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        '''if scheduler.get_lr()[0] < lr_max:
-            scheduler.step()'''
+        if scheduler.get_lr()[0] < lr_max:
+            scheduler.step()
         #scheduler.step()
         #break
 
@@ -218,15 +218,15 @@ def main():
     batch_size = 640
     lr = 5e-6
     #lr = 0.00001
-    lr_max = 1e-4
+    lr_max = 5e-4
     lr_gamma = 2
-    lr_step = 10
+    lr_step = 20
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : cosine longer', 5e-6, 1e-4, 2,10)
+    print('LR scheme : lr increase', 5e-6, 5e-4, 2,20)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -238,11 +238,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
@@ -258,8 +258,8 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
-    optimizer = utils.CosineAnnealingWR(0.01,1200000 , 50,
-            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+    '''optimizer = utils.CosineAnnealingWR(0.01,1200000 , 50,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
 
     #gradient clipping, grad check
 
