@@ -274,13 +274,13 @@ class NoamOpt:
     '''
 class CosineAnnealingWR:
     "Optim wrapper that implements rate."
-    def __init__(self, alpha_0, T, M, optimizer):
+    def __init__(self, alpha_0, T, M, optimizer, min_lr):
         self.optimizer = optimizer
         self.t = 0
         self.alpha_0 = alpha_0
         self.T = T
         self.M = M
-        self.alpha_t = 0
+        self.min_lr = min_lr
 
     def step(self):
         "Update parameters and rate"
@@ -300,18 +300,20 @@ class CosineAnnealingWR:
         #print('rate')
         #if step % 400 == 0:
         #print('current rate :', rate)
+        if rate < self.min_lr:
+            rate = self.min_lr
 
         return rate
 
 class negative_expoWR:
     "Optim wrapper that implements rate."
-    def __init__(self, alpha_0, T, M, optimizer):
+    def __init__(self, alpha_0, T, M, optimizer, min_lr):
         self.optimizer = optimizer
         self.t = 0
         self.alpha_0 = alpha_0
         self.T = T
         self.M = M
-        self.alpha_t = 0
+        self.min_lr = min_lr
 
     def step(self):
         "Update parameters and rate"
@@ -328,6 +330,9 @@ class negative_expoWR:
             step = self.t
         #print('alpha 0 :', self.alpha_0)
         rate = (self.alpha_0/2) * (math.exp(-(math.pi * ((step-1)%math.ceil(self.T/self.M)))/math.ceil(self.T/self.M)) + 1)
+
+        if rate < self.min_lr:
+            rate = self.min_lr
         #print('rate')
         #if step % 400 == 0:
         #print('current rate :', rate)

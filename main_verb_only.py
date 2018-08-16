@@ -84,10 +84,10 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-            optimizer.step()
-            optimizer.optimizer.zero_grad()
             #optimizer.step()
-            #optimizer.zero_grad()
+            #optimizer.optimizer.zero_grad()
+            optimizer.step()
+            optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
