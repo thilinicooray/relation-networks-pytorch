@@ -4,6 +4,30 @@ import torch.nn.functional as F
 import utils
 import torchvision as tv
 
+class vgg_modified(nn.Module):
+    def __init__(self):
+        super(vgg_modified,self).__init__()
+        self.vgg = tv.models.vgg16(pretrained=True)
+        self.vgg_features = self.vgg.features
+        #self.classifier = nn.Sequential(
+        #nn.Dropout(),
+        self.lin1 = nn.Linear(512 * 7 * 7, 1024)
+        self.relu1 = nn.ReLU(True)
+        self.dropout1 = nn.Dropout()
+        self.lin2 =  nn.Linear(1024, 1024)
+        self.relu2 = nn.ReLU(True)
+        self.dropout2 = nn.Dropout()
+
+        utils.initLinear(self.lin1)
+        utils.initLinear(self.lin2)
+
+    def rep_size(self): return 1024
+    def base_size(self): return 512
+
+    def forward(self,x):
+        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x).view(-1, 512*7*7)))))))
+
+
 class resnet_modified_small(nn.Module):
     def __init__(self):
         super(resnet_modified_small, self).__init__()
@@ -83,6 +107,7 @@ class RelationNetworks(nn.Module):
         self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), self.n_verbs),
         )
+        self.verb.apply(utils.init_weight)
 
         '''self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
         self.verb_lookup = nn.Embedding(self.n_verbs, embed_hidden)
@@ -150,4 +175,24 @@ class RelationNetworks(nn.Module):
         verb_loss = verb_criterion(verb_pred, gt_verbs)
 
         return verb_loss
+
+    def calculate_eval_loss(self, verb_pred, gt_verbs, gt_labels):
+
+        batch_size = verb_pred.size()[0]
+        loss = 0
+        #print('eval pred verbs :', pred_verbs)
+        for i in range(batch_size):
+            for index in range(gt_labels.size()[1]):
+                frame_loss = 0
+                verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
+
+
+                #frame_loss += verb_loss
+                #print('frame loss', frame_loss)
+                loss += verb_loss
+
+
+        final_loss = loss/batch_size
+        #print('loss :', final_loss)
+        return final_loss
 

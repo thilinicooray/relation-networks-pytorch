@@ -70,7 +70,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb)
+            loss = model.calculate_loss(verb_predict, verb, labels)
             #print('current loss = ', loss)
 
             loss.backward()
@@ -130,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_only504_reduce1fc__decaylr_b64_no_drpout,w_dec.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_1fc_resnet_man_loss3_decay.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -226,7 +226,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : lr decay, reduce 1 fc layer 504 out', 1e-5, 0.1,25)
+    print('LR scheme : lr decay, 1fc resnet, manual loss 3', 1e-5, 0.1,25)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -256,7 +256,7 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     '''optimizer = utils.CosineAnnealingWR(0.01,1200000 , 50,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
