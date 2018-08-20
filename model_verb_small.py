@@ -11,7 +11,7 @@ class vgg_modified(nn.Module):
         self.vgg_features = self.vgg.features
         #self.classifier = nn.Sequential(
         #nn.Dropout(),
-        self.lin1 = nn.Linear(512 * 7 * 7, 1024)
+        '''self.lin1 = nn.Linear(512 * 7 * 7, 1024)
         self.relu1 = nn.ReLU(True)
         self.dropout1 = nn.Dropout()
         self.lin2 =  nn.Linear(1024, 1024)
@@ -19,13 +19,14 @@ class vgg_modified(nn.Module):
         self.dropout2 = nn.Dropout()
 
         utils.initLinear(self.lin1)
-        utils.initLinear(self.lin2)
+        utils.initLinear(self.lin2)'''
 
     def rep_size(self): return 1024
     def base_size(self): return 512
 
     def forward(self,x):
-        return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x).view(-1, 512*7*7)))))))
+        #return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x).view(-1, 512*7*7)))))))
+        return self.vgg_features(x)
 
 
 class resnet_modified_small(nn.Module):
@@ -98,6 +99,17 @@ class RelationNetworks(nn.Module):
 
         self.conv = resnet_modified_small()
 
+        '''
+        self.verb = nn.Sequential(
+            nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
+            nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(mlp_hidden*2, self.n_verbs),
+        )
+        '''
+
         '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
@@ -168,13 +180,25 @@ class RelationNetworks(nn.Module):
 
 
 
-    def calculate_loss(self, verb_pred, gt_verbs):
+    def calculate_loss(self, verb_pred, gt_verbs,gt_labels):
 
-        verb_criterion = nn.CrossEntropyLoss()
-        #target = gt_verbs
-        verb_loss = verb_criterion(verb_pred, gt_verbs)
+        batch_size = verb_pred.size()[0]
+        loss = 0
+        #print('eval pred verbs :', pred_verbs)
+        for i in range(batch_size):
+            for index in range(gt_labels.size()[1]):
+                frame_loss = 0
+                verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
 
-        return verb_loss
+
+                #frame_loss += verb_loss
+                #print('frame loss', frame_loss)
+                loss += verb_loss
+
+
+        final_loss = loss/batch_size
+        #print('loss :', final_loss)
+        return final_loss
 
     def calculate_eval_loss(self, verb_pred, gt_verbs, gt_labels):
 
