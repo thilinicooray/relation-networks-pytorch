@@ -186,14 +186,16 @@ class RelationNetworks(nn.Module):
         loss = 0
         #print('eval pred verbs :', pred_verbs)
         for i in range(batch_size):
-            for index in range(gt_labels.size()[1]):
+            verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
+            loss += verb_loss
+            '''for index in range(gt_labels.size()[1]):
                 frame_loss = 0
                 verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
 
 
                 #frame_loss += verb_loss
                 #print('frame loss', frame_loss)
-                loss += verb_loss
+                loss += verb_loss'''
 
 
         final_loss = loss/batch_size
