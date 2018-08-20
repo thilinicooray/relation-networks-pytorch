@@ -97,7 +97,7 @@ class RelationNetworks(nn.Module):
         self.vocab_size = self.encoder.get_num_labels()
         self.max_role_count = self.encoder.get_max_role_count()
 
-        self.conv = vgg_modified()
+        self.conv = resnet_modified_small()
 
 
         self.verb = nn.Sequential(
