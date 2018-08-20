@@ -97,18 +97,19 @@ class RelationNetworks(nn.Module):
         self.vocab_size = self.encoder.get_num_labels()
         self.max_role_count = self.encoder.get_max_role_count()
 
-        self.conv = resnet_modified_small()
+        self.conv = vgg_modified()
 
-        '''
+
         self.verb = nn.Sequential(
-            nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
+            nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.Dropout(),
+            nn.Linear(mlp_hidden*2, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden*2, self.n_verbs),
         )
-        '''
+
 
         '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
@@ -116,9 +117,9 @@ class RelationNetworks(nn.Module):
             nn.Dropout(),
             nn.Linear(mlp_hidden*2, self.n_verbs),
         )'''
-        self.verb = nn.Sequential(
+        '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), self.n_verbs),
-        )
+        )'''
         self.verb.apply(utils.init_weight)
 
         '''self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
