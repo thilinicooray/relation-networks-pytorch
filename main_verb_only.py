@@ -130,7 +130,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_verb_3fc_resnet_man_loss1_decay.model".format(max_score))
+                    torch.save(model.state_dict(), model_dir + "/{0}_verb_2fc_resnet_man_loss1_decay.model".format(max_score))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -226,7 +226,7 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : lr decay, 3fc resnet, manual loss 1', 1e-5, 0.1,25)
+    print('LR scheme : lr decay, 2fc resnet, manual loss 1', 1e-5, 0.1,25)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'

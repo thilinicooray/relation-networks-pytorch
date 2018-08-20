@@ -33,7 +33,7 @@ class resnet_modified_small(nn.Module):
     def __init__(self):
         super(resnet_modified_small, self).__init__()
         self.resnet = tv.models.resnet34(pretrained=True)
-        #self.dropout2d = nn.Dropout2d(.5)
+        self.dropout2d = nn.Dropout2d(.5)
         #probably want linear, relu, dropout
         '''self.linear = nn.Linear(7*7*512, 1024)
         self.dropout2d = nn.Dropout2d(.5)
@@ -55,7 +55,7 @@ class resnet_modified_small(nn.Module):
         x = self.resnet.layer3(x)
         x = self.resnet.layer4(x)
 
-        #x = self.dropout2d(x)
+        x = self.dropout2d(x)
 
         #return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
         return x
@@ -100,7 +100,7 @@ class RelationNetworks(nn.Module):
         self.conv = resnet_modified_small()
 
 
-        self.verb = nn.Sequential(
+        '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
@@ -108,15 +108,15 @@ class RelationNetworks(nn.Module):
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden*2, self.n_verbs),
-        )
+        )'''
 
 
-        '''self.verb = nn.Sequential(
+        self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
             nn.Linear(mlp_hidden*2, self.n_verbs),
-        )'''
+        )
         '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), self.n_verbs),
         )'''
