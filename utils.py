@@ -151,8 +151,8 @@ def get_optimizer(lr, decay, mode, cnn_features, verb_features, role_features):
         set_trainable_param(verb_features, True)
         set_trainable_param(role_features, True)
         optimizer = torch.optim.Adam([
-            {'params': cnn_features, 'lr': lr * 0.1},
-            {'params': verb_features, 'lr': lr * 0.1},
+            {'params': cnn_features},
+            {'params': verb_features},
             {'params': role_features}
         ], lr=lr, weight_decay=decay)
 
@@ -166,7 +166,7 @@ def get_optimizer(lr, decay, mode, cnn_features, verb_features, role_features):
         set_trainable_param(verb_features, True)
         set_trainable_param(role_features, True)
         optimizer = torch.optim.Adam([
-                {'params': verb_features, 'lr': lr * 0.1},
+                {'params': verb_features},
                 {'params': role_features}
             ], lr=lr, weight_decay=decay)
 
@@ -175,8 +175,8 @@ def get_optimizer(lr, decay, mode, cnn_features, verb_features, role_features):
         set_trainable_param(verb_features, True)
         set_trainable_param(role_features, True)
         optimizer = torch.optim.Adam([
-            {'params': cnn_features, 'lr': lr * 0.1},
-            {'params': verb_features, 'lr': lr * 0.1},
+            {'params': cnn_features},
+            {'params': verb_features},
             {'params': role_features}
         ], lr=lr, weight_decay=decay)
 
