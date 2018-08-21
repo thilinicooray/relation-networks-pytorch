@@ -187,11 +187,10 @@ def load_net(fname, net_list, prefix_list = None):
     if prefix_list is not None and len(prefix_list) > 0:
         need_modification = True
     for i in range(0, len(net_list)):
-
         dict = torch.load(fname)
         try:
             for k, v in net_list[i].state_dict().items():
-                print('trying to copy :', k)
+                print('trying to copy :', k, v.size())
                 if need_modification:
                     k = prefix_list[i] + '.' + k
                 if k in dict:
