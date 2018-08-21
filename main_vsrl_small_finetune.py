@@ -17,14 +17,14 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     print_freq = 400
     dev_score_list = []
 
-    '''if model.gpu_mode >= 0 :
+    if model.gpu_mode >= 0 :
         ngpus = 2
         device_array = [i for i in range(0,ngpus)]
 
         pmodel = torch.nn.DataParallel(model, device_ids=device_array)
     else:
-        pmodel = model'''
-    pmodel = model
+        pmodel = model
+    #pmodel = model
 
     '''if scheduler.get_lr()[0] < lr_max:
         scheduler.step()'''
