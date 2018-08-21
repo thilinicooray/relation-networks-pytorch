@@ -15,7 +15,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 50
+    print_freq = 400
     dev_score_list = []
     time_all = time.time()
 
@@ -74,19 +74,19 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print(labels)'''
 
             verb_predict, role_predict = pmodel(img, verb, roles)
-            print ("forward time = {}".format(time.time() - t1))
+            #print ("forward time = {}".format(time.time() - t1))
             t1 = time.time()
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels, args)
-            print ("loss time = {}".format(time.time() - t1))
+            #print ("loss time = {}".format(time.time() - t1))
             t1 = time.time()
             #print('current loss = ', loss)
 
             loss.backward()
-            print ("backward time = {}".format(time.time() - t1))
+            #print ("backward time = {}".format(time.time() - t1))
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
@@ -257,11 +257,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=24, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=48, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=24, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=48, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
