@@ -224,7 +224,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.0001
+    lr = 0.00001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 20
@@ -233,8 +233,8 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    dataset_folder = 'imSitu'
-    imgset_folder = 'resized_256'
+    dataset_folder = 'imsitu_data'
+    imgset_folder = 'of500_images_resized'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
