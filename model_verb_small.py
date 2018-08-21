@@ -120,7 +120,7 @@ class RelationNetworks(nn.Module):
         '''self.verb = nn.Sequential(
             nn.Linear(7*7*self.conv.base_size(), self.n_verbs),
         )'''
-        self.verb.apply(utils.init_weight)
+        #self.verb.apply(utils.init_weight)
 
         '''self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
         self.verb_lookup = nn.Embedding(self.n_verbs, embed_hidden)
