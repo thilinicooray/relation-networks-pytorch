@@ -14,7 +14,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 5
     dev_score_list = []
 
     if model.gpu_mode >= 0 :
@@ -74,7 +74,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels, args)
-            #print('current loss = ', loss)
+            print('current loss = ', loss)
 
             loss.backward()
 
