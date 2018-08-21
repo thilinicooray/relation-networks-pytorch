@@ -3,7 +3,7 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_vsrl_small
+import model_vsrl_small_finetune
 import os
 import utils
 #from torchviz import make_dot
@@ -239,7 +239,7 @@ def main():
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_vsrl_small.RelationNetworks(encoder, args.gpuid)
+    model = model_vsrl_small_finetune.RelationNetworks(encoder, args.gpuid)
 
     # To group up the features
     cnn_features, verb_features, role_features = utils.group_features(model)
