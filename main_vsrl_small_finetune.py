@@ -6,6 +6,7 @@ import json
 import model_vsrl_small_finetune
 import os
 import utils
+import time
 #from torchviz import make_dot
 #from graphviz import Digraph
 
@@ -16,6 +17,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
     total_steps = 0
     print_freq = 50
     dev_score_list = []
+    time_all = time.time()
 
     if model.gpu_mode >= 0 :
         ngpus = 2
@@ -39,11 +41,15 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
 
     for epoch in range(max_epoch):
+        t0 = time.time()
+        t1 = time.time()
         #print('current sample : ', i, img.size(), verb.size(), roles.size(), labels.size())
         #sizes batch_size*3*height*width, batch*504*1, batch*6*190*1, batch*3*6*lebale_count*1
         mx = len(train_loader)
         for i, (img, verb, roles,labels) in enumerate(train_loader):
             #print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
+            t0 = time.time()
+            t1 = time.time()
             total_steps += 1
 
             if gpu_mode >= 0:
@@ -57,7 +63,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            optimizer.zero_grad()
+
 
             '''print('all inputs')
             print(img)
@@ -69,14 +75,19 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print(labels)'''
 
             verb_predict, role_predict = pmodel(img, verb, roles)
+            print ("forward time = {}".format(time.time() - t1))
+            t1 = time.time()
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
             loss = model.calculate_loss(verb_predict, verb, role_predict, labels, args)
-            print('current loss = ', loss)
+            print ("loss time = {}".format(time.time() - t1))
+            t1 = time.time()
+            #print('current loss = ', loss)
 
             loss.backward()
+            print ("backward time = {}".format(time.time() - t1))
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
@@ -89,6 +100,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
 
 
             optimizer.step()
+            optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
