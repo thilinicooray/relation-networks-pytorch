@@ -143,7 +143,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -235,7 +235,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.00001
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 20
