@@ -74,14 +74,14 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print('=========================================================================')
             print(labels)'''
 
-            verb_predict, role_predict = pmodel(img, verb, roles)
+            verb_predict, role_predict = pmodel.forward_eval(img)
             #print ("forward time = {}".format(time.time() - t1))
             t1 = time.time()
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels, args)
+            loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels, args)
             #loss = loss_ * random.random() #try random loss
             #print ("loss time = {}".format(time.time() - t1))
             t1 = time.time()
@@ -145,7 +145,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_5e_4_b24.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4_b24_train_predv_epo25dec.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -237,7 +237,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.0005
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 25
@@ -332,6 +332,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
 
 
 
