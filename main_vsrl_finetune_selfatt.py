@@ -238,7 +238,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.00005
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 25
@@ -250,7 +250,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 512 hidden, 5e-5 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers')
+    print('model spec :, 512 hidden, 1e-4 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
