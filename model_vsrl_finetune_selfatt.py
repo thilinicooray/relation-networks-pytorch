@@ -269,6 +269,8 @@ class RelationNetworks(nn.Module):
         #print('g out size :', g.size())
         #print('no issue after g view')
         mask = self.encoder.get_adj_matrix(verbs)
+        if self.gpu_mode >= 0:
+            mask = mask.to(torch.device('cuda'))
         #print('mask ', mask.size(), mask)
         f = self.f(g, mask)
         f = self.classifier(f)
