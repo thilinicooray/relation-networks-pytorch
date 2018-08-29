@@ -64,6 +64,7 @@ class imsitu_encoder():
             verb2role_list.append(torch.tensor(role_verb))
 
         self.verb2role_list = torch.stack(verb2role_list)
+        self.verb2role_encoding = self.get_verb2role_encoding()
         '''print('verb to role list :', self.verb2role_list.size())
 
         print('unit test verb and roles: \n')
@@ -85,6 +86,27 @@ class imsitu_encoder():
         #print('item encoding size : v r l', verb.size(), roles.size(), labels.size())
         #assuming labels are also in order of roles in encoder
         return verb, roles, labels
+
+    def get_verb2role_encoding(self):
+        verb2role_embedding_list = []
+
+        for verb_id in range(len(self.verb_list)):
+            current_role_list = self.verb2_role_dict[self.verb_list[verb_id]]
+
+            role_embedding_verb = []
+
+            for role in current_role_list:
+                role_embedding_verb.append(1)
+
+
+            padding_count = self.max_role_count - len(role_embedding_verb)
+
+            for i in range(padding_count):
+                role_embedding_verb.append(0)
+
+            verb2role_embedding_list.append(torch.tensor(role_embedding_verb))
+
+        return verb2role_embedding_list
 
     def save_encoder(self):
         return None
@@ -143,3 +165,16 @@ class imsitu_encoder():
         labels = torch.stack(all_frame_id_list,0)
 
         return labels
+
+    def get_adj_matrix(self, verb_ids):
+        adj_matrix_list = []
+
+        for id in verb_ids:
+            encoding = self.verb2role_encoding[id]
+            encoding_tensor = torch.unsqueeze(torch.tensor(encoding),0)
+            expanded = encoding_tensor.expand(self.max_role_count, encoding_tensor.size(1))
+            transpose = torch.t(expanded)
+            adj = expanded*transpose
+            adj_matrix_list.append(adj)
+
+        return torch.stack(adj_matrix_list).type(torch.FloatTensor)
