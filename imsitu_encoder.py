@@ -170,6 +170,7 @@ class imsitu_encoder():
         adj_matrix_list = []
 
         for id in verb_ids:
+            print('ids :', id)
             encoding = self.verb2role_encoding[id]
             encoding_tensor = torch.unsqueeze(torch.tensor(encoding),0)
             expanded = encoding_tensor.expand(self.max_role_count, encoding_tensor.size(1))
