@@ -55,6 +55,20 @@ def attention(query, key, value, mask=None, dropout=None):
         p_attn = dropout(p_attn)
     return torch.matmul(p_attn, value), p_attn
 
+class SublayerConnection(nn.Module):
+    """
+    A residual connection followed by a layer norm.
+    Note for code simplicity the norm is first as opposed to last.
+    """
+    def __init__(self, size, dropout):
+        super(SublayerConnection, self).__init__()
+        self.norm = LayerNorm(size)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, sublayer):
+        "Apply residual connection to any sublayer with the same size."
+        return x + self.dropout(sublayer(self.norm(x)))
+
 class MultiHeadedAttention(nn.Module):
     def __init__(self, h, d_model, dropout=0.1):
         "Take in model size and number of heads."
@@ -109,12 +123,14 @@ class Role_Labeller(nn.Module):
     def __init__(self, layer, N):
         super(Role_Labeller, self).__init__()
         self.layers = clones(layer, N)
+        self.sublayer = SublayerConnection(layer.size, layer.dropout)
         self.norm = LayerNorm(layer.size)
 
     def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."
         for layer in self.layers:
-            x = layer(x,x,x, mask)
+            x = self.sublayer(x, layer(x,x,x, mask))
+
         return self.norm(x)
 
 class RelationNetworks(nn.Module):
