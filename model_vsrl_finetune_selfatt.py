@@ -118,18 +118,30 @@ class LayerNorm(nn.Module):
         std = x.std(-1, keepdim=True)
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
+class DecoderLayer(nn.Module):
+    "Decoder is made up of self-attn and feed forward (defined below)"
+    def __init__(self, size, self_attn, dropout):
+        super(DecoderLayer, self).__init__()
+        self.self_attn = self_attn
+        self.sublayer = SublayerConnection(size, dropout)
+        self.size = size
+
+    def forward(self, x, mask):
+        "Follow Figure 1 (left) for connections."
+        x = self.sublayer(x, lambda x: self.self_attn(x, x, x, mask))
+        return x
+
 class Role_Labeller(nn.Module):
     "Core encoder is a stack of N layers"
     def __init__(self, layer, N):
         super(Role_Labeller, self).__init__()
         self.layers = clones(layer, N)
-        self.sublayer = SublayerConnection(layer.size)
         self.norm = LayerNorm(layer.size)
 
     def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."
         for layer in self.layers:
-            x = self.sublayer(x, layer(x,x,x, mask))
+            x = layer(x, mask)
 
         return self.norm(x)
 
@@ -200,7 +212,7 @@ class RelationNetworks(nn.Module):
         c = copy.deepcopy
         attn = MultiHeadedAttention(h=1, d_model=mlp_hidden)
 
-        self.f = Role_Labeller(c(attn), 3)
+        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.1), 3)
         self.classifier = nn.Linear(mlp_hidden, self.vocab_size)
 
         self.conv_hidden = self.conv.base_size()
