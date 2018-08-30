@@ -60,7 +60,7 @@ class SublayerConnection(nn.Module):
     A residual connection followed by a layer norm.
     Note for code simplicity the norm is first as opposed to last.
     """
-    def __init__(self, size, dropout):
+    def __init__(self, size, dropout=0.1):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
         self.dropout = nn.Dropout(dropout)
@@ -123,7 +123,7 @@ class Role_Labeller(nn.Module):
     def __init__(self, layer, N):
         super(Role_Labeller, self).__init__()
         self.layers = clones(layer, N)
-        self.sublayer = SublayerConnection(layer.size, layer.dropout)
+        self.sublayer = SublayerConnection(layer.size)
         self.norm = LayerNorm(layer.size)
 
     def forward(self, x, mask):
