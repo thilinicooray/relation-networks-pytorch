@@ -60,7 +60,7 @@ class SublayerConnection(nn.Module):
     A residual connection followed by a layer norm.
     Note for code simplicity the norm is first as opposed to last.
     """
-    def __init__(self, size, dropout=0.1):
+    def __init__(self, size, dropout=0.5):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
         self.dropout = nn.Dropout(dropout)
@@ -70,7 +70,7 @@ class SublayerConnection(nn.Module):
         return x + self.dropout(sublayer(self.norm(x)))
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.5):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
@@ -210,9 +210,9 @@ class RelationNetworks(nn.Module):
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=1, d_model=mlp_hidden)
+        attn = MultiHeadedAttention(h=3, d_model=mlp_hidden)
 
-        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.1), 3)
+        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.5), 3)
         for p in self.f.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
