@@ -250,7 +250,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 512 hidden, 1e-4 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers with res connections param init xavier uni 3 heads dropout 0.5')
+    print('model spec :, 512 hidden, 1e-4 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers with res connections param init xavier uni 4 heads dropout 0.5')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)

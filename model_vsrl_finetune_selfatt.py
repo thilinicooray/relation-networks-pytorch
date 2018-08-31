@@ -210,7 +210,7 @@ class RelationNetworks(nn.Module):
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=3, d_model=mlp_hidden)
+        attn = MultiHeadedAttention(h=4, d_model=mlp_hidden)
 
         self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.5), 3)
         for p in self.f.parameters():
