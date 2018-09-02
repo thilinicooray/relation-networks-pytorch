@@ -310,7 +310,7 @@ class RelationNetworks(nn.Module):
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
         #print('ffffff', f.size())
 
         #del f, g
@@ -403,7 +403,7 @@ class RelationNetworks(nn.Module):
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size +1)
         #print('ffffff', f.size())
 
         #del f, g
