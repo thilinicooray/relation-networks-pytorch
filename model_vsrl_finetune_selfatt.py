@@ -302,7 +302,7 @@ class RelationNetworks(nn.Module):
         #print('concat vec size :', concat_vec_masked.size())
         cat = concat_vec_masked.view(-1, self.n_concat)
         g = self.g(cat)
-        #print('after g :', g.size())
+        print('after g :', g.size())
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')

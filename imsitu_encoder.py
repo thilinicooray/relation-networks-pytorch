@@ -198,7 +198,7 @@ class imsitu_encoder():
                 #print('i:j', i,j)
                 if role_encoding[j] == 0:
                     mask_reshaped[i][j:] = 0
-                    org_reshaped[i] = mask_reshaped[i] * org_reshaped[i].clone()
+                    org_reshaped[i][j:] = 0
                     break
         print('org size1', org_reshaped.size())
         return org_reshaped.view(org_tensor.size())
