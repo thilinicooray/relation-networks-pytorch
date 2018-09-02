@@ -297,12 +297,10 @@ class RelationNetworks(nn.Module):
         concat_vec = torch.cat([conv1, conv2, qst], 2)
         #apply mask
         concat_vec_masked = self.encoder.get_mask(verbs, concat_vec)
-        #print('concat mask :', concat_mask.size())
+        print('concat mask :', concat_vec_masked.size())
         #concat_vec_masked = concat_mask * concat_vec
         #print('concat vec size :', concat_vec_masked.size())
-        print('no issue before view')
         cat = concat_vec_masked.view(-1, self.n_concat)
-        print('no issue after view', cat.size())
         g = self.g(cat)
         #print('after g :', g.size())
         '''if self.gpu_mode >= 0:
