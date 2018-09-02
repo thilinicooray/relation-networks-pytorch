@@ -247,8 +247,8 @@ def main():
     n_epoch = 500
     n_worker = 3
 
-    dataset_folder = 'imsitu_data'
-    imgset_folder = 'of500_images_resized'
+    dataset_folder = 'imSitu'
+    imgset_folder = 'resized_256'
 
     print('model spec :, 512 hidden, 5e-5 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers with res connections param init xavier uni 4 heads dropout 0.5 mask 6loss maskb4g')
 
@@ -262,7 +262,7 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=4, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
