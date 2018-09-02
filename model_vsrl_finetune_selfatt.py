@@ -394,12 +394,11 @@ class RelationNetworks(nn.Module):
         #print('no issue efore cat')
         concat_vec = torch.cat([conv1, conv2, qst], 2)
         #apply mask
-        concat_mask = self.encoder.get_mask(verbs, concat_vec)
-        #print('concat mask :', concat_mask.size())
-        concat_vec_masked = concat_mask * concat_vec
+        concat_vec_masked = self.encoder.get_mask(verbs, concat_vec)
+        #concat_vec_masked = concat_mask * concat_vec
         #print('concat vec size :', concat_vec_masked.size())
-        #print('no issue after cat')
-        g = self.g(concat_vec_masked.view(-1, self.n_concat))
+        cat = concat_vec_masked.view(-1, self.n_concat)
+        g = self.g(cat)
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
