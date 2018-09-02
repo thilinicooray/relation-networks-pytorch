@@ -200,4 +200,5 @@ class imsitu_encoder():
                     mask_reshaped[i][j:] = 0
                     org_reshaped[i] = mask_reshaped[i] * org_reshaped[i]
                     break
+        del mask, mask_reshaped
         return org_reshaped.view(mask.size())

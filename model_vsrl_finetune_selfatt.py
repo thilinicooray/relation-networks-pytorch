@@ -302,7 +302,7 @@ class RelationNetworks(nn.Module):
         #print('concat vec size :', concat_vec_masked.size())
         print('no issue before view')
         cat = concat_vec_masked.view(-1, self.n_concat)
-        print('no issue after view')
+        print('no issue after view', cat.size())
         g = self.g(cat)
         #print('after g :', g.size())
         '''if self.gpu_mode >= 0:
