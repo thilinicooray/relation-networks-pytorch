@@ -187,9 +187,10 @@ class imsitu_encoder():
 
     def get_mask(self, verb_ids, org_tensor):
         mask = org_tensor.clone().fill_(1)
-        org_reshaped = org_tensor.clone()
+        org = org_tensor.clone()
         #print('org size :', mask.size(), len(verb_ids))
         mask_reshaped = mask.view(len(verb_ids), self.max_role_count, -1, mask.size(2))
+        org_reshaped = org.view(len(verb_ids), self.max_role_count, -1, mask.size(2))
         #print('mask size', mask_reshaped.size())
         for i in range(0, len(verb_ids)):
             role_encoding = self.verb2role_encoding[verb_ids[i]]
