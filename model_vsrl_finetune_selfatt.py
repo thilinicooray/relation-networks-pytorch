@@ -56,6 +56,17 @@ def attention(query, key, value, mask=None, dropout=None):
         p_attn = dropout(p_attn)
     return torch.matmul(p_attn, value), p_attn
 
+class FeedForward(nn.Module):
+    "Implements FFN equation."
+    def __init__(self, d_model, d_ff, dropout=0.1):
+        super(FeedForward, self).__init__()
+        self.w_1 = nn.Linear(d_model, d_ff)
+        self.w_2 = nn.Linear(d_ff, d_model)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        return self.w_2(self.dropout(F.relu(self.w_1(x))))
+
 class SublayerConnection(nn.Module):
     """
     A residual connection followed by a layer norm.
@@ -125,16 +136,17 @@ class LayerNorm(nn.Module):
 
 class DecoderLayer(nn.Module):
     "Decoder is made up of self-attn and feed forward (defined below)"
-    def __init__(self, size, self_attn, dropout):
+    def __init__(self, size, self_attn, feed_forward, dropout):
         super(DecoderLayer, self).__init__()
         self.self_attn = self_attn
-        self.sublayer = SublayerConnection(size, dropout)
+        self.feed_forward= feed_forward
+        self.sublayer = clones(SublayerConnection(size, dropout), 2)
         self.size = size
 
     def forward(self, x, mask):
         "Follow Figure 1 (left) for connections."
-        x = self.sublayer(x, lambda x: self.self_attn(x, x, x, mask))
-        return x
+        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
+        return self.sublayer[1](x, self.feed_forward)
 
 class Role_Labeller(nn.Module):
     "Core encoder is a stack of N layers"
@@ -215,9 +227,12 @@ class RelationNetworks(nn.Module):
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=4, d_model=mlp_hidden)
+        attn = MultiHeadedAttention(h=2, d_model=mlp_hidden)
+        ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*2, dropout=0.5)
 
-        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.5), 3)
+        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.5), 3)
+
+        #self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.5), 3)
         for p in self.f.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
