@@ -297,12 +297,10 @@ class RelationNetworks(nn.Module):
         concat_vec = torch.cat([conv1, conv2, qst], 2)
         #apply mask
         concat_vec_masked = self.encoder.get_mask(verbs, concat_vec)
-        print('concat mask :', concat_vec_masked.size())
         #concat_vec_masked = concat_mask * concat_vec
         #print('concat vec size :', concat_vec_masked.size())
         cat = concat_vec_masked.view(-1, self.n_concat)
         g = self.g(cat)
-        print('after g :', g.size())
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
