@@ -43,6 +43,7 @@ def clones(module, N):
 
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
+    #print('inside single att: query', query.size())
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
@@ -89,17 +90,21 @@ class MultiHeadedAttention(nn.Module):
         if mask is not None:
             # Same mask applied to all h heads.
             mask = mask.unsqueeze(1)
+
+        #print('inside attention :mask', mask.size())
         nbatches = query.size(0)
 
         # 1) Do all the linear projections in batch from d_model => h x d_k
-        #what is happening here??????
+        #print('before linears : query', query.size())
         query, key, value = \
             [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
              for l, x in zip(self.linears, (query, key, value))]
+        #print('after linears :query', len(query), query[0].size())
 
         # 2) Apply attention on all the projected vectors in batch.
         x, self.attn = attention(query, key, value, mask=mask,
                                  dropout=self.dropout)
+        #print('x out from att:', x.size())
         # 3) "Concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous() \
             .view(nbatches, -1, self.h * self.d_k)
@@ -286,25 +291,32 @@ class RelationNetworks(nn.Module):
         conv2 = conv_tr.unsqueeze(2).expand(batch_size_updated, n_pair, n_pair, n_channel)
         conv1 = conv1.contiguous().view(-1, n_pair * n_pair, n_channel)
         conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
-        #print('size :', conv2.size())
+        #print('conv1 and 2 size :', conv1.size(), conv2.size())
         #print('no issue efore cat')
-        concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
-        #print('concat vec size :', concat_vec.size())
+        #concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+        concat_vec = torch.cat([conv1, conv2, qst], 2)
+        #apply mask
+        concat_mask = self.encoder.get_mask(verbs, concat_vec)
+        #print('concat mask :', concat_mask.size())
+        concat_vec_masked = concat_mask * concat_vec
+        #print('concat vec size :', concat_vec_masked.size())
         #print('no issue after cat')
-        g = self.g(concat_vec)
-
+        g = self.g(concat_vec_masked.view(-1, self.n_concat))
+        #print('after g :', g.size())
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
         g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
+        #print('g after summing all elements in the image together :', g.size())
         g = g.contiguous().view(batch_size, -1, self.mlp_hidden)
-        #print('g out size :', g.size())
+        #print('g out size with separate roles :', g.size())
         #print('no issue after g view')
         mask = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
             mask = mask.to(torch.device('cuda'))
-        #print('mask ', mask.size(), mask)
+        #print('mask ', mask.size(),mask)
         f = self.f(g, mask)
+        #print('after self att :', f.size())
         f = self.classifier(f)
         #print('no issue after f')
         '''if self.gpu_mode >= 0:
@@ -382,10 +394,14 @@ class RelationNetworks(nn.Module):
         conv2 = conv2.contiguous().view(-1, n_pair * n_pair, n_channel)
         #print('size :', conv2.size())
         #print('no issue efore cat')
-        concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+        concat_vec = torch.cat([conv1, conv2, qst], 2)
+        #apply mask
+        concat_mask = self.encoder.get_mask(verbs, concat_vec)
+        #print('concat mask :', concat_mask.size())
+        concat_vec_masked = concat_mask * concat_vec
+        #print('concat vec size :', concat_vec_masked.size())
         #print('no issue after cat')
-        g = self.g(concat_vec)
-
+        g = self.g(concat_vec_masked.view(-1, self.n_concat))
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
