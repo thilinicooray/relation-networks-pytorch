@@ -216,7 +216,7 @@ class RelationNetworks(nn.Module):
         for p in self.f.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        self.classifier = nn.Linear(mlp_hidden, self.vocab_size)
+        self.classifier = nn.Linear(mlp_hidden, self.vocab_size+1)
 
         self.conv_hidden = self.conv.base_size()
         self.lstm_hidden = lstm_hidden
@@ -425,8 +425,9 @@ class RelationNetworks(nn.Module):
                     verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
                     #frame_loss = criterion(role_label_pred[i], gt_labels[i,index])
                     for j in range(0, self.max_role_count):
-                        frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,j] ,self.vocab_size)
-                    frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
+                        frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,j] ,None)
+                    #frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
+                    frame_loss = verb_loss + frame_loss/self.max_role_count
                     #print('frame loss', frame_loss, 'verb loss', verb_loss)
                     loss += frame_loss
         else:
