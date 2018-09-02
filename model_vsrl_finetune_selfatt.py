@@ -289,6 +289,7 @@ class RelationNetworks(nn.Module):
         #print('size :', conv2.size())
         #print('no issue efore cat')
         concat_vec = torch.cat([conv1, conv2, qst], 2).view(-1, self.n_concat)
+        #print('concat vec size :', concat_vec.size())
         #print('no issue after cat')
         g = self.g(concat_vec)
 

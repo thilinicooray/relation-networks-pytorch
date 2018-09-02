@@ -146,7 +146,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_5e_5_b32_train_gt_epo25dec_selfatt_3heads_xavier_res_dp5.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_5e_5_b32_train_gt_epo25dec_selfatt_3heads_xavier_res_dp5_mask.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -250,7 +250,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 512 hidden, 5e-5 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers with res connections param init xavier uni 4 heads dropout 0.5')
+    print('model spec :, 512 hidden, 5e-5 init lr, 25 epoch decay, 3 layer mlp for g, 3 att layers with res connections param init xavier uni 4 heads dropout 0.5 mask')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
