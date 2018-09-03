@@ -481,7 +481,7 @@ class RelationNetworks(nn.Module):
 
         #final_loss = loss/batch_size
         final_loss = loss
-        print('loss :', final_loss, final_loss/batch_size)
+        #print('loss :', final_loss, final_loss/batch_size)
         return final_loss
 
     def calculate_eval_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels,args):
