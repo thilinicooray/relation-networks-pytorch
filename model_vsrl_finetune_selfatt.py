@@ -479,7 +479,8 @@ class RelationNetworks(nn.Module):
                     loss += frame_loss
 
 
-        final_loss = loss/batch_size
+        #final_loss = loss/batch_size
+        final_loss = loss
         #print('loss :', final_loss)
         return final_loss
 
