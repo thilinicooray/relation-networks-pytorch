@@ -16,7 +16,6 @@ class GCN(nn.Module):
         self.gc3 = GraphConvolution(nhid, nhid*2)
         self.dropout = dropout
         self.final = nn.Linear(nhid*2, nclass)
-        self.m = nn.Relu()
 
     def forward(self, x, adj):
         x = F.relu(self.gc1(x, adj))
