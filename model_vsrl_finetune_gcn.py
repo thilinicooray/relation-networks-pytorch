@@ -46,7 +46,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=256
+            mlp_hidden=512
     ):
         super().__init__()
 
@@ -330,7 +330,7 @@ class RelationNetworks(nn.Module):
                     loss += frame_loss
 
 
-        final_loss = loss/(batch_size + 10e-8)
+        final_loss = loss/(batch_size)
         #final_loss = loss
         #print('loss :', final_loss, final_loss/batch_size)
         return final_loss
