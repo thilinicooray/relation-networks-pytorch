@@ -165,7 +165,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=512
+            mlp_hidden=256
     ):
         super().__init__()
 
@@ -196,12 +196,12 @@ class RelationNetworks(nn.Module):
         self.conv = resnet_modified_small()
 
         self.verb = nn.Sequential(
-            nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
+            nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.Linear(mlp_hidden*2, mlp_hidden*4),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*2, self.n_verbs),
+            nn.Linear(mlp_hidden*4, self.n_verbs),
         )
 
         self.role_lookup = nn.Embedding(self.n_roles+1, embed_hidden, padding_idx=self.n_roles)
@@ -217,19 +217,32 @@ class RelationNetworks(nn.Module):
             nn.ReLU(),
             nn.Linear(mlp_hidden, mlp_hidden),
             nn.ReLU(),
-            #nn.Linear(mlp_hidden, mlp_hidden),
-            #nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.ReLU(),
+        )
+
+        self.f_1 = nn.Sequential(
+            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden),
+            nn.ReLU(),
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=1, d_model=mlp_hidden)
+        attn = MultiHeadedAttention(h=2, d_model=mlp_hidden)
         ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*2, dropout=0.1)
 
         self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.1), 3)
         for p in self.f.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
-        self.classifier = nn.Linear(mlp_hidden, self.vocab_size)
+        self.classifier = nn.Sequential(
+            nn.ReLU(),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(mlp_hidden*2, self.vocab_size+1),
+        )
 
         self.conv_hidden = self.conv.base_size()
         self.lstm_hidden = lstm_hidden
@@ -309,20 +322,21 @@ class RelationNetworks(nn.Module):
             torch.cuda.empty_cache()'''
         #print('no issue after g')
         g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
-        g = g.contiguous().view(batch_size, -1, self.mlp_hidden)
+        f1 = self.f_1(g)
+        f1 = f1.contiguous().view(batch_size, -1, self.mlp_hidden)
         #print('g out size :', g.size())
         #print('no issue after g view')
         mask = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
             mask = mask.to(torch.device('cuda'))
         #print('mask ', mask.size(), mask)
-        f = self.f(g, mask)
+        f = self.f(f1, mask)
         f = self.classifier(f)
         #print('no issue after f')
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
         #print('ffffff', f.size())
 
         #del f, g
@@ -402,20 +416,21 @@ class RelationNetworks(nn.Module):
             torch.cuda.empty_cache()'''
         #print('no issue after g')
         g = g.view(-1, n_pair * n_pair, self.mlp_hidden).sum(1).squeeze()
-        g = g.contiguous().view(batch_size, -1, self.mlp_hidden)
+        f1 = self.f_1(g)
+        f1 = f1.contiguous().view(batch_size, -1, self.mlp_hidden)
         #print('g out size :', g.size())
         #print('no issue after g view')
         mask = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
             mask = mask.to(torch.device('cuda'))
         #print('mask ', mask.size())
-        f = self.f(g, mask)
+        f = self.f(f1, mask)
         f = self.classifier(f)
         #print('no issue after f')
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size)
+        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
         #print('ffffff', f.size())
 
         #del f, g

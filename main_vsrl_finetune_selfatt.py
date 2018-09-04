@@ -3,7 +3,7 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_vsrl_finetune_selfatt
+import model_vsrl_finetune_selfatt_ff
 import os
 import utils
 import time
@@ -146,7 +146,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4_b32_train_gt_epo25dec_selfatt_2heads_xavier_res_dp5_mask_loss6_maskb4g_512.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4_b24_train_gt_epo25dec_selfatt_2heads_xavier_res_dp5_mask_loss6_maskb4g_256_FF_mlpafterg.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -250,23 +250,23 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 256 hidden, 1e-4 init lr, 25 epoch decay, 4 layer mlp for g, 3 att layers with res connections param init xavier uni 2 heads dropout 0.5 mask 6loss maskb4g')
+    print('model spec :, 256 hidden, 1e-4 init lr, 25 epoch decay, 4 layer mlp for g,2mlp f1, 3 att layers with res connections param init xavier uni 2 heads dropout 0.5 mask 6loss maskb4g')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_vsrl_finetune_selfatt.RelationNetworks(encoder, args.gpuid)
+    model = model_vsrl_finetune_selfatt_ff.RelationNetworks(encoder, args.gpuid)
 
     # To group up the features
     cnn_features, verb_features, role_features = utils.group_features(model)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=24, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=24, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
