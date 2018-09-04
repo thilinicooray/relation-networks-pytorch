@@ -5,6 +5,7 @@ import utils
 import torchvision as tv
 import math
 import copy
+from .pygcn import gcn
 
 class resnet_modified_small(nn.Module):
     def __init__(self):
@@ -36,131 +37,6 @@ class resnet_modified_small(nn.Module):
 
         #return self.dropout(self.relu(self.linear(x.view(-1, 7*7*self.base_size()))))
         return x
-
-def clones(module, N):
-    "Produce N identical layers."
-    return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
-
-def attention(query, key, value, mask=None, dropout=None):
-    "Compute 'Scaled Dot Product Attention'"
-    #print('inside single att: query', query.size())
-    d_k = query.size(-1)
-    scores = torch.matmul(query, key.transpose(-2, -1)) \
-             / math.sqrt(d_k)
-    #print('scores :', scores)
-    if mask is not None:
-        scores = scores.masked_fill(mask == 0, -1e9)
-    p_attn = F.softmax(scores, dim = -1)
-    #print('att ', p_attn)
-    if dropout is not None:
-        p_attn = dropout(p_attn)
-    return torch.matmul(p_attn, value), p_attn
-
-class FeedForward(nn.Module):
-    "Implements FFN equation."
-    def __init__(self, d_model, d_ff, dropout=0.1):
-        super(FeedForward, self).__init__()
-        self.w_1 = nn.Linear(d_model, d_ff)
-        self.w_2 = nn.Linear(d_ff, d_model)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x):
-        return self.w_2(self.dropout(F.relu(self.w_1(x))))
-
-class SublayerConnection(nn.Module):
-    """
-    A residual connection followed by a layer norm.
-    Note for code simplicity the norm is first as opposed to last.
-    """
-    def __init__(self, size, dropout=0.5):
-        super(SublayerConnection, self).__init__()
-        self.norm = LayerNorm(size)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, x, sublayer):
-        "Apply residual connection to any sublayer with the same size."
-        return x + self.dropout(sublayer(self.norm(x)))
-
-class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.5):
-        "Take in model size and number of heads."
-        super(MultiHeadedAttention, self).__init__()
-        assert d_model % h == 0
-        # We assume d_v always equals d_k
-        self.d_k = d_model // h
-        self.h = h
-        #only 1 linear layer
-        self.linears = clones(nn.Linear(d_model, d_model), 4)
-        #self.linears = nn.Linear(d_model, d_model)
-        self.attn = None
-        self.dropout = nn.Dropout(p=dropout)
-        self.size = d_model
-
-    def forward(self, query, key, value, mask=None):
-        "Implements Figure 2"
-        if mask is not None:
-            # Same mask applied to all h heads.
-            mask = mask.unsqueeze(1)
-
-        #print('inside attention :mask', mask.size())
-        nbatches = query.size(0)
-
-        # 1) Do all the linear projections in batch from d_model => h x d_k
-        #print('before linears : query', query.size())
-        query, key, value = \
-            [l(x).view(nbatches, -1, self.h, self.d_k).transpose(1, 2)
-             for l, x in zip(self.linears, (query, key, value))]
-        #print('after linears :query', len(query), query[0].size())
-
-        # 2) Apply attention on all the projected vectors in batch.
-        x, self.attn = attention(query, key, value, mask=mask,
-                                 dropout=self.dropout)
-        #print('x out from att:', x.size())
-        # 3) "Concat" using a view and apply a final linear.
-        x = x.transpose(1, 2).contiguous() \
-            .view(nbatches, -1, self.h * self.d_k)
-        return self.linears[-1](x)
-
-class LayerNorm(nn.Module):
-    "Construct a layernorm module (See citation for details)."
-    def __init__(self, features, eps=1e-6):
-        super(LayerNorm, self).__init__()
-        self.a_2 = nn.Parameter(torch.ones(features))
-        self.b_2 = nn.Parameter(torch.zeros(features))
-        self.eps = eps
-
-    def forward(self, x):
-        mean = x.mean(-1, keepdim=True)
-        std = x.std(-1, keepdim=True)
-        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
-
-class DecoderLayer(nn.Module):
-    "Decoder is made up of self-attn and feed forward (defined below)"
-    def __init__(self, size, self_attn, feed_forward, dropout):
-        super(DecoderLayer, self).__init__()
-        self.self_attn = self_attn
-        self.feed_forward= feed_forward
-        self.sublayer = clones(SublayerConnection(size, dropout), 2)
-        self.size = size
-
-    def forward(self, x, mask):
-        "Follow Figure 1 (left) for connections."
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
-        return self.sublayer[1](x, self.feed_forward)
-
-class Role_Labeller(nn.Module):
-    "Core encoder is a stack of N layers"
-    def __init__(self, layer, N):
-        super(Role_Labeller, self).__init__()
-        self.layers = clones(layer, N)
-        self.norm = LayerNorm(layer.size)
-
-    def forward(self, x, mask):
-        "Pass the input (and mask) through each layer in turn."
-        for layer in self.layers:
-            x = layer(x, mask)
-
-        return self.norm(x)
 
 class RelationNetworks(nn.Module):
     def __init__(
@@ -226,22 +102,11 @@ class RelationNetworks(nn.Module):
             nn.ReLU(),
         )
 
-        c = copy.deepcopy
-        attn = MultiHeadedAttention(h=2, d_model=mlp_hidden)
-        ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*2, dropout=0.5)
-
-        self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.5), 3)
-
-        #self.f = Role_Labeller(DecoderLayer(mlp_hidden, c(attn), 0.5), 3)
-        for p in self.f.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-        self.classifier = nn.Sequential(
-            nn.ReLU(),
-            nn.Linear(mlp_hidden, mlp_hidden*2),
-            nn.ReLU(),
-            nn.Dropout(),
-            nn.Linear(mlp_hidden*2, self.vocab_size+1),
+        self.role_graph = gcn.GCN(
+            nfeat=self.mlp_hidden,
+            nhid=256,
+            nclass=self.vocab_size+1,
+            dropout=0.5
         )
 
         self.conv_hidden = self.conv.base_size()
@@ -330,18 +195,13 @@ class RelationNetworks(nn.Module):
         g = g.contiguous().view(batch_size, -1, self.mlp_hidden)
         #print('g out size with separate roles :', g.size())
         #print('no issue after g view')
-        mask = self.encoder.get_adj_matrix(verbs)
+        adj_mtx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
-            mask = mask.to(torch.device('cuda'))
+            adj_mtx = adj_mtx.to(torch.device('cuda'))
         #print('mask ', mask.size(),mask)
-        f = self.f(g, mask)
-        #print('after self att :', f.size())
-        f = self.classifier(f)
-        #print('no issue after f')
-        '''if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()'''
+        role_predict = self.role_graph(g, adj_mtx)
 
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
+        #role_predict = f.contiguous().view(batch_size, -1, self.vocab_size+1)
         #print('ffffff', f.size())
 
         #del f, g
@@ -427,20 +287,11 @@ class RelationNetworks(nn.Module):
         g = g.contiguous().view(batch_size, -1, self.mlp_hidden)
         #print('g out size :', g.size())
         #print('no issue after g view')
-        mask = self.encoder.get_adj_matrix(verbs)
+        adj_mtx = self.encoder.get_adj_matrix(verbs)
         if self.gpu_mode >= 0:
-            mask = mask.to(torch.device('cuda'))
-        #print('mask ', mask.size())
-        f = self.f(g, mask)
-        f = self.classifier(f)
-        #print('no issue after f')
-        '''if self.gpu_mode >= 0:
-            torch.cuda.empty_cache()'''
-
-        role_predict = f.contiguous().view(batch_size, -1, self.vocab_size +1)
-        #print('ffffff', f.size())
-
-        #del f, g
+            adj_mtx = adj_mtx.to(torch.device('cuda'))
+        #print('mask ', mask.size(),mask)
+        role_predict = self.role_graph(g, adj_mtx)
 
         return verb_pred, role_predict
 
@@ -484,61 +335,3 @@ class RelationNetworks(nn.Module):
         #print('loss :', final_loss, final_loss/batch_size)
         return final_loss
 
-    def calculate_eval_loss(self, verb_pred, gt_verbs, role_label_pred, gt_labels,args):
-
-        batch_size = verb_pred.size()[0]
-
-        sorted_idx = torch.sort(verb_pred, 1, True)[1]
-        pred_verbs = sorted_idx[:,0]
-        #print('eval pred verbs :', pred_verbs)
-        if args.train_all:
-            loss = 0
-            for i in range(batch_size):
-                for index in range(gt_labels.size()[1]):
-                    frame_loss = 0
-                    verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
-                    gt_role_list = self.encoder.get_role_ids(gt_verbs[i])
-                    pred_role_list = self.encoder.get_role_ids(pred_verbs[i])
-
-                    #print ('role list diff :', gt_role_list, pred_role_list)
-
-                    for j in range(0, self.max_role_count):
-                        if pred_role_list[j] == len(self.encoder.role_list):
-                            continue
-                        if pred_role_list[j] in gt_role_list:
-                            #print('eval loss :', gt_role_list, pred_role_list[j])
-                            g_idx = (gt_role_list == pred_role_list[j]).nonzero()
-                            #print('found idx' , g_idx)
-                            frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
-
-                    frame_loss = verb_loss + frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
-                    #print('frame loss', frame_loss)
-                    loss += frame_loss
-        else:
-            loss = 0
-            for i in range(batch_size):
-                for index in range(gt_labels.size()[1]):
-                    frame_loss = 0
-                    verb_loss = utils.cross_entropy_loss(verb_pred[i], gt_verbs[i])
-                    gt_role_list = self.encoder.get_role_ids(gt_verbs[i])
-                    pred_role_list = self.encoder.get_role_ids(pred_verbs[i])
-
-                    #print ('role list diff :', gt_role_list, pred_role_list)
-
-                    for j in range(0, self.max_role_count):
-                        if pred_role_list[j] == len(self.encoder.role_list):
-                            continue
-                        if pred_role_list[j] in gt_role_list:
-                            #print('eval loss :', gt_role_list, pred_role_list[j])
-                            g_idx = (gt_role_list == pred_role_list[j]).nonzero()
-                            #print('found idx' , g_idx)
-                            frame_loss += utils.cross_entropy_loss(role_label_pred[i][j], gt_labels[i,index,g_idx] ,self.vocab_size)
-
-                    frame_loss = frame_loss/len(self.encoder.verb2_role_dict[self.encoder.verb_list[gt_verbs[i]]])
-                    #print('frame loss', frame_loss)
-                    loss += frame_loss
-
-
-        final_loss = loss/batch_size
-        #print('loss :', final_loss)
-        return final_loss
