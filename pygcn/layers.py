@@ -9,7 +9,6 @@ import torch
 
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
-from .. import utils
 
 
 class GraphConvolution(Module):
