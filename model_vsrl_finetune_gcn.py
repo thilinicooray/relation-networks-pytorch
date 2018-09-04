@@ -103,7 +103,7 @@ class RelationNetworks(nn.Module):
         )
 
         self.role_graph = gcn.GCN(
-            nfeat=self.mlp_hidden,
+            nfeat=mlp_hidden,
             nhid=256,
             nclass=self.vocab_size+1,
             dropout=0.5
