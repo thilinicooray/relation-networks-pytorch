@@ -5,7 +5,7 @@ import utils
 import torchvision as tv
 import math
 import copy
-from .pygcn import gcn
+from pygcn import gcn
 
 class resnet_modified_small(nn.Module):
     def __init__(self):
