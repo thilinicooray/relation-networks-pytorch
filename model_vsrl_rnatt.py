@@ -144,14 +144,14 @@ class DecoderLayer(nn.Module):
         self.norm = LayerNorm(size)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x):
+    def forward(self, x, mask):
         #print('original x size :', x.size())
         x_org = x
         batch_size = x_org.size(0)
         max_role_count = x_org.size(1)
 
         #x = self.norm(x)
-        x = self.self_attn(x, x, x, None)
+        x = self.self_attn(x, x, x, mask)
         x = x.view(-1, self.size)
         x = self.feed_forward(x)
         x = x.view(batch_size,max_role_count, -1)
@@ -165,12 +165,12 @@ class Role_Labeller(nn.Module):
         self.layers = clones(layer, N)
         #self.norm = LayerNorm(layer.size)
 
-    def forward(self, x):
+    def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."
 
         for layer in self.layers:
             size = layer.size
-            x = layer(x)
+            x = layer(x, mask)
 
         return x.view(-1, size)
 
@@ -318,7 +318,10 @@ class RelationNetworks(nn.Module):
         #print('no issue after cat')
         g = self.g(concat_vec)
         g = g.view(batch_size, self.max_role_count,-1)
-        g = self.rn_att(g)
+        mask = self.encoder.get_adj_matrix(verbs)
+        if self.gpu_mode >= 0:
+            mask = mask.to(torch.device('cuda'))
+        g = self.rn_att(g,mask)
 
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
@@ -406,7 +409,10 @@ class RelationNetworks(nn.Module):
         #print('no issue after cat')
         g = self.g(concat_vec)
         g = g.view(batch_size, self.max_role_count,-1)
-        g = self.rn_att(g)
+        mask = self.encoder.get_adj_matrix(verbs)
+        if self.gpu_mode >= 0:
+            mask = mask.to(torch.device('cuda'))
+        g = self.rn_att(g,mask)
         '''if self.gpu_mode >= 0:
             torch.cuda.empty_cache()'''
         #print('no issue after g')
