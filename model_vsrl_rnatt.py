@@ -66,7 +66,20 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return F.relu(self.w_1(x))
 
-'''class SublayerConnection(nn.Module):
+class LayerNorm(nn.Module):
+    "Construct a layernorm module (See citation for details)."
+    def __init__(self, features, eps=1e-6):
+        super(LayerNorm, self).__init__()
+        self.a_2 = nn.Parameter(torch.ones(features))
+        self.b_2 = nn.Parameter(torch.zeros(features))
+        self.eps = eps
+
+    def forward(self, x):
+        mean = x.mean(-1, keepdim=True)
+        std = x.std(-1, keepdim=True)
+        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+
+class SublayerConnection(nn.Module):
     """
     A residual connection followed by a layer norm.
     Note for code simplicity the norm is first as opposed to last.
@@ -78,7 +91,7 @@ class FeedForward(nn.Module):
 
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
-        return x + self.dropout(sublayer(self.norm(x)))'''
+        return x + self.dropout(sublayer(self.norm(x)))
 
 class MultiHeadedAttention(nn.Module):
     def __init__(self, h, d_model, dropout=None):
@@ -122,22 +135,27 @@ class MultiHeadedAttention(nn.Module):
 
 class DecoderLayer(nn.Module):
     "Decoder is made up of self-attn and feed forward (defined below)"
-    def __init__(self, size, self_attn, feed_forward):
+    def __init__(self, size, self_attn, feed_forward, dropout=0.5):
         super(DecoderLayer, self).__init__()
         self.self_attn = self_attn
         self.feed_forward= feed_forward
         #self.sublayer = clones(SublayerConnection(size, dropout), 2)
         self.size = size
+        self.norm = LayerNorm(size)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         #print('original x size :', x.size())
-        batch_size = x.size(0)
-        max_role_count = x.size(1)
+        x_org = x
+        batch_size = x_org.size(0)
+        max_role_count = x_org.size(1)
+
+        x = self.norm(x)
         x = self.self_attn(x, x, x, None)
         x = x.view(-1, self.size)
         x = self.feed_forward(x)
         x = x.view(batch_size,max_role_count, -1)
-
+        x = x_org + self.dropout(x)
         return x
 
 class Role_Labeller(nn.Module):
