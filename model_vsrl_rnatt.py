@@ -43,11 +43,11 @@ def clones(module, N):
 
 def attention(query, key, value, mask=None, dropout=None):
     "Compute 'Scaled Dot Product Attention'"
-    print('inside single att: query', query.size())
+    #print('inside single att: query', query.size())
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
-    print('scores :', scores.size())
+    #print('scores :', scores.size())
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim = -1)
@@ -114,7 +114,7 @@ class MultiHeadedAttention(nn.Module):
         # 2) Apply attention on all the projected vectors in batch.
         x, self.attn = attention(query, key, value, mask=mask,
                                  )
-        print('x out from att:', x.size())
+        #print('x out from att:', x.size())
         # 3) "Concat" using a view and apply a final linear.
         x = x.transpose(1, 2).contiguous() \
             .view(nbatches, -1, self.h * self.d_k)
@@ -130,7 +130,7 @@ class DecoderLayer(nn.Module):
         self.size = size
 
     def forward(self, x):
-        print('original x size :', x.size())
+        #print('original x size :', x.size())
         batch_size = x.size(0)
         max_role_count = x.size(1)
         x = self.self_attn(x, x, x, None)
