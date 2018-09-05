@@ -48,7 +48,6 @@ def attention(query, key, value, mask=None, dropout=None):
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
     #print('scores :', scores.size())
-    mask = None
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim = -1)
@@ -110,10 +109,11 @@ class MultiHeadedAttention(nn.Module):
         self.size = d_model
 
     def forward(self, query, key, value, mask=None):
+        #print('mask size', mask.size())
         "Implements Figure 2"
-        if mask is not None:
+        '''if mask is not None:
             # Same mask applied to all h heads.
-            mask = mask.unsqueeze(1)
+            mask = mask.unsqueeze(1)'''
 
         #print('inside attention :mask', mask.size())
         nbatches = query.size(0)
