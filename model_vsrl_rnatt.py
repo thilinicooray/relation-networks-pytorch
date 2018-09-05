@@ -48,6 +48,7 @@ def attention(query, key, value, mask=None, dropout=None):
     scores = torch.matmul(query, key.transpose(-2, -1)) \
              / math.sqrt(d_k)
     #print('scores :', scores.size())
+    mask = None
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim = -1)
