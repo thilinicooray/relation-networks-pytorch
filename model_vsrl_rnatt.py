@@ -150,7 +150,7 @@ class DecoderLayer(nn.Module):
         batch_size = x_org.size(0)
         max_role_count = x_org.size(1)
 
-        x = self.norm(x)
+        #x = self.norm(x)
         x = self.self_attn(x, x, x, None)
         x = x.view(-1, self.size)
         x = self.feed_forward(x)
