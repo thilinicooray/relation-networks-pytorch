@@ -100,9 +100,8 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #start debugger
             #import pdb; pdb.set_trace()
 
-
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -146,7 +145,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4_b24_train_gt_epo25dec_selfatt_2heads_xavier_res_dp5_mask_loss6_maskb4g_256_FF_mlpafterg.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_1e_4_b24_train_gt_epo25dec_selfatt_2heads_xavier_res_dp5_mask_loss6_maskb4g_256_FF_mlpafterg_transformopt.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -173,7 +172,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        scheduler.step()
+        #scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -238,7 +237,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0.0001
+    lr = 0
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 25
@@ -250,7 +249,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 256 hidden, 1e-4 init lr, 25 epoch decay, 4 layer mlp for g,2mlp f1, 3 att layers with res connections param init xavier uni 2 heads dropout 0.5 mask 6loss maskb4g')
+    print('model spec :, 256 hidden, 1e-4 init lr, 25 epoch decay, 4 layer mlp for g,2mlp f1, 3 att layers with res connections param init xavier uni 2 heads dropout 0.5 mask 6loss maskb4g transformopt')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
@@ -324,12 +323,14 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
+    opt = utils.NoamOpt(256, 1, 4000, optimizer)
+
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
+    train(model, train_loader, dev_loader, traindev_loader, opt, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
 
 
 

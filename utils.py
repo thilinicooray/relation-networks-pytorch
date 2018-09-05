@@ -223,56 +223,15 @@ class NoamOpt:
             p['lr'] = rate
         self._rate = rate
         self.optimizer.step()
-    #original
+
     def rate(self, step = None):
         "Implement `lrate` above"
         if step is None:
             step = self._step
         rate = self.factor * \
-               (self.model_size ** (-0.5) *
-                min(step ** (-0.5), step * self.warmup ** (-1.5)))
-        if step % 400 == 0:
-            print('current rate :', rate)
+              (self.model_size ** (-0.5) *
+               min(step ** (-0.5), step * self.warmup ** (-1.5)))
         return rate
-    #added restart
-    '''def rate(self, step = None):
-        "Implement `lrate` above"
-        if step is None:
-            step = self._step
-        factor = self.factor
-        if step % self.warmup == 0:
-            #factor = factor*(10**2)
-            return 0.1
-        rate = factor * \
-               (self.model_size ** (-0.5) *
-                min(step ** (-0.5), (step%self.warmup + 30) * self.warmup ** (-1.5)))
-        if step % self.warmup == 0:
-            print(rate)
-        return rate'''
-    #no min operation, always start from the beginning
-    '''def rate(self, step = None):
-        "Implement `lrate` above"
-        if step is None:
-            step = self._step
-        factor = self.factor
-        if step % self.warmup == 0:
-            #factor = factor*(10**2)
-            return 0.1
-        rate = factor * \
-               (self.model_size ** (-0.5) *
-                (step%self.warmup + 30) * self.warmup ** (-1.5))
-        if step % self.warmup == 0:
-            print(rate)
-        #print('rate :', rate)
-        return rate'''
-
-    '''
-    model_opt = NoamOpt(model.src_embed[0].d_model, 1, 400,
-        torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
-    model_opt.step()
-    model_opt.optimizer.zero_grad()
-    
-    '''
 class CosineAnnealingWR:
     "Optim wrapper that implements rate."
     def __init__(self, alpha_0, T, M, optimizer, min_lr):
