@@ -60,7 +60,7 @@ class SublayerConnection(nn.Module):
     A residual connection followed by a layer norm.
     Note for code simplicity the norm is first as opposed to last.
     """
-    def __init__(self, size, dropout=0.1):
+    def __init__(self, size, dropout=0.5):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
         self.dropout = nn.Dropout(dropout)
@@ -71,7 +71,7 @@ class SublayerConnection(nn.Module):
 
 class FeedForward(nn.Module):
     "Implements FFN equation."
-    def __init__(self, d_model, d_ff, dropout=0.1):
+    def __init__(self, d_model, d_ff, dropout=0.5):
         super(FeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)
         self.w_2 = nn.Linear(d_ff, d_model)
@@ -81,7 +81,7 @@ class FeedForward(nn.Module):
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout=0.5):
         "Take in model size and number of heads."
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
@@ -216,10 +216,10 @@ class RelationNetworks(nn.Module):
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=4, d_model=mlp_hidden)
-        ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*2, dropout=0.1)
+        attn = MultiHeadedAttention(h=8, d_model=mlp_hidden)
+        ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*4, dropout=0.5)
 
-        self.g = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.1), 6)
+        self.g = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.5), 6)
         for p in self.g.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
