@@ -101,7 +101,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #import pdb; pdb.set_trace()
 
             optimizer.step()
-            optimizer.optimizer.zero_grad()
+            optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -145,7 +145,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_256_att3_tran1_b64.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_512_att6_decaye4_b64.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -172,7 +172,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        #scheduler.step()
+        scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -237,7 +237,7 @@ def main():
 
     batch_size = 640
     #lr = 5e-6
-    lr = 0
+    lr = 1e-4
     lr_max = 5e-4
     lr_gamma = 0.1
     lr_step = 25
@@ -249,7 +249,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 256 hidden, 25 epoch decay, att, 6 layers transformer b64, utils.NoamOpt(512, 1, 4000, optimizer)')
+    print('model spec :, 256 hidden, 25 epoch decay e-4, att, 6 layers transformer b64, ')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
@@ -323,14 +323,14 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    opt = utils.NoamOpt(512, 1, 4000, optimizer)
+    #opt = utils.NoamOpt(512, 1, 4000, optimizer)
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, opt, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
 
 
 
