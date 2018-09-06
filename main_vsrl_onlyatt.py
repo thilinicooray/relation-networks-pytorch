@@ -12,11 +12,11 @@ import random
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, args,eval_frequency=4000):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, args,eval_frequency=400):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 400
+    print_freq = 40
     dev_score_list = []
     time_all = time.time()
 
@@ -145,7 +145,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_256_att3_e4_decay_b32.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_256_att3_e4_decay_b256.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -249,7 +249,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 256 hidden, 25 epoch decay, att, 3 layers e-4 init lr decay b32')
+    print('model spec :, 256 hidden, 25 epoch decay, att, 3 layers e-4 init lr decay b256')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
@@ -261,11 +261,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=256, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=256, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
