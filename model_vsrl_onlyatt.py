@@ -165,7 +165,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=256
+            mlp_hidden=512
     ):
         super().__init__()
 
@@ -196,12 +196,12 @@ class RelationNetworks(nn.Module):
         self.conv = resnet_modified_small()
 
         self.verb = nn.Sequential(
-            nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
+            nn.Linear(7*7*self.conv.base_size(), mlp_hidden),
             nn.ReLU(),
-            nn.Linear(mlp_hidden*2, mlp_hidden*4),
+            nn.Linear(mlp_hidden, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*4, self.n_verbs),
+            nn.Linear(mlp_hidden*2, self.n_verbs),
         )
 
         self.role_lookup = nn.Embedding(self.n_roles+1, mlp_hidden, padding_idx=self.n_roles)
@@ -216,10 +216,10 @@ class RelationNetworks(nn.Module):
         )
 
         c = copy.deepcopy
-        attn = MultiHeadedAttention(h=2, d_model=mlp_hidden)
+        attn = MultiHeadedAttention(h=4, d_model=mlp_hidden)
         ff = FeedForward(mlp_hidden, d_ff=mlp_hidden*2, dropout=0.1)
 
-        self.g = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.1), 3)
+        self.g = Role_Labeller(DecoderLayer(mlp_hidden, c(attn),c(ff), 0.1), 6)
         for p in self.g.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)

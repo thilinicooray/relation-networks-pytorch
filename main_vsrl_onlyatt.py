@@ -12,11 +12,11 @@ import random
 #from graphviz import Digraph
 
 
-def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, args,eval_frequency=400):
+def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, model_name, args,eval_frequency=4000):
     model.train()
     train_loss = 0
     total_steps = 0
-    print_freq = 40
+    print_freq = 400
     dev_score_list = []
     time_all = time.time()
 
@@ -101,7 +101,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             #import pdb; pdb.set_trace()
 
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.optimizer.zero_grad()
 
             '''print('grad check :')
             for f in model.parameters():
@@ -172,7 +172,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, role_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        scheduler.step()
+        #scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -261,11 +261,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=256, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=256, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
@@ -323,14 +323,14 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    #opt = utils.NoamOpt(256, 1, 4000, optimizer)
+    opt = utils.NoamOpt(512, 1, 4000, optimizer)
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
+    train(model, train_loader, dev_loader, traindev_loader, opt, scheduler, n_epoch, args.output_dir, encoder, args.gpuid, clip_norm, lr_max, model_name, args)
 
 
 
