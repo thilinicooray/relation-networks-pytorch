@@ -145,7 +145,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 max_score = max(dev_score_list)
 
                 if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{}_{}_256_att3_tran_b64.model".format(max_score, model_name))
+                    torch.save(model.state_dict(), model_dir + "/{}_{}_256_att3_tran1_b64.model".format(max_score, model_name))
                     print ('New best model saved! {0}'.format(max_score))
 
                 #eval on the trainset
@@ -249,7 +249,7 @@ def main():
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
 
-    print('model spec :, 256 hidden, 25 epoch decay, att, 6 layers transformer b64, utils.NoamOpt(512, 2, 4000, optimizer)')
+    print('model spec :, 256 hidden, 25 epoch decay, att, 6 layers transformer b64, utils.NoamOpt(512, 1, 4000, optimizer)')
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
@@ -323,7 +323,7 @@ def main():
         #print('GPU enabled')
         model.cuda()
 
-    opt = utils.NoamOpt(512, 2, 4000, optimizer)
+    opt = utils.NoamOpt(512, 1, 4000, optimizer)
 
     #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
