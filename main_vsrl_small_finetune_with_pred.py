@@ -310,9 +310,9 @@ def main():
     else:
         if not args.evaluate:
             print('Training from the scratch.')
-            optimizer_select = 0
-            args.train_all = True
-            model_name = 'train_full'
+        optimizer_select = 0
+        args.train_all = True
+        model_name = 'train_full'
 
     optimizer = utils.get_optimizer(lr,weight_decay,optimizer_select,
                                     cnn_features, verb_features, role_features)
