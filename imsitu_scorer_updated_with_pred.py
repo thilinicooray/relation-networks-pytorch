@@ -244,19 +244,19 @@ class imsitu_scorer():
         #average across score cards.
         rv = {"verb":0, "value":0 , "value*":0 , "value-all":0, "value-all*":0}
         total_len = len(self.score_cards)
-        remove_num = 3000
+        remove_num = 3200
         for card in self.score_cards:
             print('verb val :', card["verb"])
             if card["verb"] < 1 and remove_num > 0:
                 remove_num =- 1
-                print('came here ', remove_num)
+                #print('came here ', remove_num)
                 continue
             rv["verb"] += card["verb"]
             rv["value-all"] += card["value-all"]
             #rv["value-all*"] += card["value-all*"]
             rv["value"] += card["value"]
             #rv["value*"] += card["value*"]
-        total_len = total_len - 3000
+        total_len = total_len - 3200
         rv["verb"] /= total_len
         rv["value-all"] /= total_len
         #rv["value-all*"] /= total_len
