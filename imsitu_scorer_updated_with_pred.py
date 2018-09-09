@@ -185,9 +185,11 @@ class imsitu_scorer():
             if self.write_to_file:
                 gt_sit = [gt_v.item()]
                 pred_sit = [sorted_idx[0:self.topk].item()]
-                verb_name = self.encoder.verb_list[sorted_idx[0:self.topk].item()]
+                verb_name = self.encoder.verb_list[gt_v.item()]
                 if verb_name not in self.verb_pred:
-                    self.verb_pred[verb_name] = 0
+                    self.verb_pred[verb_name] = [1,0]
+                else:
+                    self.verb_pred[verb_name][0] += 1
 
 
             score_card = new_card
@@ -196,7 +198,7 @@ class imsitu_scorer():
             if verb_found:
                 score_card["verb"] += 1
                 if self.write_to_file:
-                    self.verb_pred[verb_name] += 1
+                    self.verb_pred[verb_name][1] += 1
 
             gt_role_count = self.encoder.get_role_count(gt_v)
             gt_role_list = self.encoder.verb2_role_dict[self.encoder.verb_list[gt_v]]
