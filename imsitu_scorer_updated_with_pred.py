@@ -256,7 +256,7 @@ class imsitu_scorer():
             #rv["value-all*"] += card["value-all*"]
             rv["value"] += card["value"]
             #rv["value*"] += card["value*"]
-        total_len = total_len - remove_num
+        total_len = total_len - 3000
         rv["verb"] /= total_len
         rv["value-all"] /= total_len
         #rv["value-all*"] /= total_len
