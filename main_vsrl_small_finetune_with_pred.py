@@ -308,10 +308,11 @@ def main():
         optimizer_select = 0
         model_name = 'resume_all'
     else:
-        print('Training from the scratch.')
-        optimizer_select = 0
-        args.train_all = True
-        model_name = 'train_full'
+        if not args.evaluate:
+            print('Training from the scratch.')
+            optimizer_select = 0
+            args.train_all = True
+            model_name = 'train_full'
 
     optimizer = utils.get_optimizer(lr,weight_decay,optimizer_select,
                                     cnn_features, verb_features, role_features)
@@ -338,7 +339,7 @@ def main():
                     top5_avg["value"] + top5_avg["value-all"]
         avg_score /= 8
 
-        print ('Dev {} average :{:.2f} {} {}'.format( avg_score*100,
+        print ('Dev average :{:.2f} {} {}'.format( avg_score*100,
                                                      utils.format_dict(top1_avg,'{:.2f}', '1-'),
                                                      utils.format_dict(top5_avg, '{:.2f}', '5-')))
 
