@@ -179,13 +179,13 @@ class imsitu_scorer():
             #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
             #print('role sets :', role_set, gt_role_set)
-            verb_name = self.encoder.verb_list[sorted_idx[0:self.topk].item()]
+
 
             new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
             if self.write_to_file:
                 gt_sit = [gt_v.item()]
                 pred_sit = [sorted_idx[0:self.topk].item()]
-
+                verb_name = self.encoder.verb_list[sorted_idx[0:self.topk].item()]
                 if verb_name not in self.verb_pred:
                     self.verb_pred[verb_name] = 0
 
