@@ -355,6 +355,8 @@ def main():
             writer = csv.writer(f)
             writer.writerows(pred_labels)
 
+        print('Writing predictions to file completed !')
+
 
     else:
 

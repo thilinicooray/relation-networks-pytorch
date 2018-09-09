@@ -182,8 +182,8 @@ class imsitu_scorer():
 
             new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
             if self.write_to_file:
-                gt_sit = [gt_v]
-                pred_sit = [sorted_idx[0:self.topk]]
+                gt_sit = [gt_v.item()]
+                pred_sit = [sorted_idx[0:self.topk].item()]
 
 
             score_card = new_card
@@ -205,8 +205,8 @@ class imsitu_scorer():
                 for r in range(0,self.nref):
                     gt_label_id = gt_label[r][k]
                     if self.write_to_file:
-                        pred_sit.append(label_id)
-                        gt_sit.append(gt_label_id)
+                        pred_sit.append(label_id.item())
+                        gt_sit.append(gt_label_id.item())
                     #print('ground truth label id = ', gt_label_id)
                     if label_id == gt_label_id:
                         found = True
