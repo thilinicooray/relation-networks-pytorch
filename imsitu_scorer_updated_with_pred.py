@@ -183,9 +183,11 @@ class imsitu_scorer():
 
             new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
             if self.write_to_file:
-                gt_sit = [gt_v.item()]
-                pred_sit = [sorted_idx[0:self.topk].item()]
                 verb_name = self.encoder.verb_list[gt_v.item()]
+                gt_sit = [verb_name, gt_v.item()]
+                pred_verb_name = self.encoder.verb_list[sorted_idx[0:self.topk].item()]
+                pred_sit = [pred_verb_name,sorted_idx[0:self.topk].item()]
+
                 if verb_name not in self.verb_pred:
                     self.verb_pred[verb_name] = [1,0]
                 else:
