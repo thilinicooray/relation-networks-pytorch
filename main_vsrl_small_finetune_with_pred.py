@@ -358,7 +358,9 @@ def main():
 
         with open("verbpred_rn_only.csv", "w") as f:
             writer = csv.writer(f)
-            writer.writerows(verb_pred)
+            writer.writerow(['verb', 'total', 'predicted'])
+            for key, value in verb_pred.items():
+                writer.writerow([key, value[0], value[1]])
 
 
 
