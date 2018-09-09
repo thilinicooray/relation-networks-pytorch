@@ -346,6 +346,7 @@ def main():
         #write results to csv file
         gt_labels = top1.gt_situation
         pred_labels = top1.predicted_situation
+        verb_pred = top1.verb_pred
 
         with open("gt_rn_only.csv", "w") as f:
             writer = csv.writer(f)
@@ -354,6 +355,12 @@ def main():
         with open("pred_rn_only.csv", "w") as f:
             writer = csv.writer(f)
             writer.writerows(pred_labels)
+
+        with open("verbpred_rn_only.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerows(verb_pred)
+
+
 
         print('Writing predictions to file completed !')
 

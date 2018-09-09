@@ -12,6 +12,7 @@ class imsitu_scorer():
         if self.write_to_file:
             self.predicted_situation = []
             self.gt_situation = []
+            self.verb_pred = {}
 
     def clear(self):
         self.score_cards = {}
@@ -178,18 +179,24 @@ class imsitu_scorer():
             #print('sorted idx:',self.topk, sorted_idx[:self.topk], gt_v)
             #print('groud truth verb id:', gt_v)
             #print('role sets :', role_set, gt_role_set)
-
+            verb_name = self.encoder.verb_list[sorted_idx[0:self.topk].item()]
 
             new_card = {"verb":0.0, "value":0.0, "value*":0.0, "n_value":0.0, "value-all":0.0, "value-all*":0.0}
             if self.write_to_file:
                 gt_sit = [gt_v.item()]
                 pred_sit = [sorted_idx[0:self.topk].item()]
 
+                if verb_name not in self.verb_pred:
+                    self.verb_pred[verb_name] = 0
+
 
             score_card = new_card
 
             verb_found = (torch.sum(sorted_idx[0:self.topk] == gt_v) == 1)
-            if verb_found: score_card["verb"] += 1
+            if verb_found:
+                score_card["verb"] += 1
+                if self.write_to_file:
+                    self.verb_pred[verb_name] += 1
 
             gt_role_count = self.encoder.get_role_count(gt_v)
             gt_role_list = self.encoder.verb2_role_dict[self.encoder.verb_list[gt_v]]
@@ -244,9 +251,9 @@ class imsitu_scorer():
         #average across score cards.
         rv = {"verb":0, "value":0 , "value*":0 , "value-all":0, "value-all*":0}
         total_len = len(self.score_cards)
-        remove_num = 3200
+        remove_num = 3000
         for card in self.score_cards:
-            print('verb val :', card["verb"])
+            #print('verb val :', card["verb"])
             if card["verb"] < 1 and remove_num > 0:
                 remove_num =- 1
                 #print('came here ', remove_num)
@@ -256,7 +263,7 @@ class imsitu_scorer():
             #rv["value-all*"] += card["value-all*"]
             rv["value"] += card["value"]
             #rv["value*"] += card["value*"]
-        total_len = total_len - 3200
+        total_len = total_len - 3000
         rv["verb"] /= total_len
         rv["value-all"] /= total_len
         #rv["value-all*"] /= total_len
