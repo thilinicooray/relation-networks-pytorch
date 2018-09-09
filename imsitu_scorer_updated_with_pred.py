@@ -246,8 +246,10 @@ class imsitu_scorer():
         total_len = len(self.score_cards)
         remove_num = 3000
         for card in self.score_cards:
+            print('verb val :', card["verb"])
             if card["verb"] < 1 and remove_num > 0:
                 remove_num =- 1
+                print('came here ', remove_num)
                 continue
             rv["verb"] += card["verb"]
             rv["value-all"] += card["value-all"]
