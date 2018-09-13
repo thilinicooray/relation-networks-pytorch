@@ -228,8 +228,8 @@ def main():
 
     print('LR scheme : lr decay, vgg, fc as per gnn paper batch 64', 1e-3, 0.85,10)
 
-    dataset_folder = 'imsitu_data'
-    imgset_folder = 'of500_images_resized'
+    dataset_folder = 'imSitu'
+    imgset_folder = 'resized_256'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
