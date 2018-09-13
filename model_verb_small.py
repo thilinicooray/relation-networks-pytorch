@@ -7,7 +7,7 @@ import torchvision as tv
 class vgg_modified(nn.Module):
     def __init__(self):
         super(vgg_modified,self).__init__()
-        self.vgg = tv.models.vgg16(pretrained=True)
+        self.vgg = tv.models.vgg16(pretrained=False)
         self.vgg_features = self.vgg.features
         #self.classifier = nn.Sequential(
         #nn.Dropout(),
@@ -32,7 +32,7 @@ class vgg_modified(nn.Module):
 class resnet_modified_small(nn.Module):
     def __init__(self):
         super(resnet_modified_small, self).__init__()
-        self.resnet = tv.models.resnet34(pretrained=True)
+        self.resnet = tv.models.resnet34(pretrained=False)
         self.dropout2d = nn.Dropout2d(.5)
         #probably want linear, relu, dropout
         '''self.linear = nn.Linear(7*7*512, 1024)
@@ -101,13 +101,13 @@ class RelationNetworks(nn.Module):
 
 
         self.verb = nn.Sequential(
-            nn.Linear(7*7*self.conv.base_size(), 4096),
+            nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(4096, 4096),
+            nn.Linear(mlp_hidden*2, mlp_hidden*4),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(4096, self.n_verbs),
+            nn.Linear(mlp_hidden*4, self.n_verbs),
         )
 
 

@@ -157,9 +157,9 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
-        if scheduler.get_lr()[0] < lr_max:
-            scheduler.step()
-        #scheduler.step()
+        '''if scheduler.get_lr()[0] < lr_max:
+            scheduler.step()'''
+        scheduler.step()
         #break
 
 def eval(model, dev_loader, encoder, gpu_mode):
@@ -217,16 +217,16 @@ def main():
 
     batch_size = 640
     lr = 1e-5
-    #lr = 0.00001
+    lr = 0.0001
     lr_max = 5e-4
     lr_gamma = 0.1
-    lr_step = 20
+    lr_step = 25
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
     n_worker = 3
 
-    print('LR scheme : lr decay, 3fc resnet, 4096 manual loss 1 batch 32', 1e-5, 0.1,20)
+    print('LR scheme : lr decay, 3fc resnet, 512,1024 manual loss 1 batch 64', 1e-5, 0.1,20)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
@@ -238,11 +238,11 @@ def main():
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=64, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.train_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=32, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=64, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
     traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
