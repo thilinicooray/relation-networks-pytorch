@@ -4,10 +4,29 @@ import torch.nn.functional as F
 import utils
 import torchvision as tv
 
+class vgg16_modified(nn.Module):
+    def __init__(self):
+        super(vgg16_modified,self).__init__()
+        self.vgg = tv.models.vgg16(pretrained=True)
+        self.vgg_features = self.vgg.features
+        self.out_features = self.vgg.classifier[3].in_features
+        features = list(self.vgg.classifier.children())[:-4] # Remove last layer
+        self.vgg_classifier = nn.Sequential(*features) # Replace the model classifier
+        #print(self.vgg_classifier)
+
+    def rep_size(self): return 1024
+    def base_size(self): return 512
+
+    def forward(self,x):
+        #return self.dropout2(self.relu2(self.lin2(self.dropout1(self.relu1(self.lin1(self.vgg_features(x).view(-1, 512*7*7)))))))
+        y =  self.vgg_classifier(self.vgg_features(x).view(-1, 512*7*7))
+        #print('y size :',  y.size())
+        return y
+
 class vgg_modified(nn.Module):
     def __init__(self):
         super(vgg_modified,self).__init__()
-        self.vgg = tv.models.vgg16(pretrained=False)
+        self.vgg = tv.models.vgg16(pretrained=True)
         self.vgg_features = self.vgg.features
         #self.classifier = nn.Sequential(
         #nn.Dropout(),
@@ -69,7 +88,7 @@ class RelationNetworks(nn.Module):
             conv_hidden=24,
             embed_hidden=300,
             lstm_hidden=300,
-            mlp_hidden=256
+            mlp_hidden=512
     ):
         super().__init__()
 
@@ -97,17 +116,14 @@ class RelationNetworks(nn.Module):
         self.vocab_size = self.encoder.get_num_labels()
         self.max_role_count = self.encoder.get_max_role_count()
 
-        self.conv = resnet_modified_small()
+        self.conv = vgg16_modified()
 
 
         self.verb = nn.Sequential(
-            nn.Linear(7*7*self.conv.base_size(), mlp_hidden*2),
+            nn.Linear(mlp_hidden*8, mlp_hidden*2),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(mlp_hidden*2, mlp_hidden*4),
-            nn.ReLU(),
-            nn.Dropout(),
-            nn.Linear(mlp_hidden*4, self.n_verbs),
+            nn.Linear(mlp_hidden*2, self.n_verbs),
         )
 
 
@@ -171,7 +187,7 @@ class RelationNetworks(nn.Module):
         conv = self.conv(image)
 
         #verb pred
-        verb_pred = self.verb(conv.view(-1, 7*7*self.conv.base_size()))
+        verb_pred = self.verb(conv)
 
 
 
