@@ -217,10 +217,10 @@ def main():
 
     batch_size = 640
     lr = 1e-5
-    lr = 0.001
+    lr = 0.0001
     lr_max = 5e-4
-    lr_gamma = 0.85
-    lr_step = 10
+    lr_gamma = 0.1
+    lr_step = 25
     clip_norm = 50
     weight_decay = 1e-4
     n_epoch = 500
