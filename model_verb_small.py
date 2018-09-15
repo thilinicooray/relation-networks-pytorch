@@ -9,8 +9,8 @@ class vgg16_modified(nn.Module):
         super(vgg16_modified,self).__init__()
         self.vgg = tv.models.vgg16(pretrained=True)
         self.vgg_features = self.vgg.features
-        self.out_features = self.vgg.classifier[3].in_features
-        features = list(self.vgg.classifier.children())[:-4] # Remove last layer
+        self.out_features = self.vgg.classifier[6].in_features
+        features = list(self.vgg.classifier.children())[:-1] # Remove last layer
         self.vgg_classifier = nn.Sequential(*features) # Replace the model classifier
         #print(self.vgg_classifier)
 
@@ -95,8 +95,7 @@ class RelationNetworks(nn.Module):
         self.normalize = tv.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         self.train_transform = tv.transforms.Compose([
-            tv.transforms.Resize(224),
-            tv.transforms.RandomCrop(224),
+            tv.transforms.RandomResizedCrop(224),
             tv.transforms.RandomHorizontalFlip(),
             tv.transforms.ToTensor(),
             self.normalize,
