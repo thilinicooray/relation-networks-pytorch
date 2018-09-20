@@ -3,11 +3,13 @@ from imsitu_encoder import imsitu_encoder
 from imsitu_loader import imsitu_loader
 from imsitu_scorer_updated import imsitu_scorer
 import json
-import model_vsrl_small
+import model_verb_tuan
 import os
 import utils
+import torchvision as tv
 #from torchviz import make_dot
 #from graphviz import Digraph
+
 
 
 def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, max_epoch, model_dir, encoder, gpu_mode, clip_norm, lr_max, eval_frequency=4000):
@@ -26,9 +28,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
         pmodel = model'''
     pmodel = model
 
-    '''if scheduler.get_lr()[0] < lr_max:
-        scheduler.step()'''
-
     top1 = imsitu_scorer(encoder, 1, 3)
     top5 = imsitu_scorer(encoder, 5, 3)
 
@@ -45,7 +44,6 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
         for i, (img, verb, roles,labels) in enumerate(train_loader):
             #print("epoch{}-{}/{} batches\r".format(epoch,i+1,mx)) ,
             total_steps += 1
-
             if gpu_mode >= 0:
                 img = torch.autograd.Variable(img.cuda())
                 roles = torch.autograd.Variable(roles.cuda())
@@ -57,7 +55,7 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
 
             '''print('all inputs')
             print(img)
@@ -68,39 +66,26 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
             print('=========================================================================')
             print(labels)'''
 
-            verb_predict, role_predict = pmodel(img, verb, roles)
+
+            verb_predict = pmodel(img)
 
             '''g = make_dot(verb_predict, model.state_dict())
             g.view()'''
 
-            loss = model.calculate_loss(verb_predict, verb, role_predict, labels)
+            loss = model.calculate_loss(verb_predict, verb, labels)
             #print('current loss = ', loss)
 
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
-
-
-            '''for param in filter(lambda p: p.requires_grad,model.parameters()):
-                print(param.grad.data.sum())'''
-
-            #start debugger
-            #import pdb; pdb.set_trace()
-
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
 
             optimizer.step()
-
-            '''print('grad check :')
-            for f in model.parameters():
-                print('data is')
-                print(f.data)
-                print('grad is')
-                print(f.grad)'''
+            optimizer.zero_grad()
 
             train_loss += loss.item()
 
-            top1.add_point(verb_predict, verb, role_predict, labels)
-            top5.add_point(verb_predict, verb, role_predict, labels)
+            top1.add_point_verb_only(verb_predict, verb)
+            top5.add_point_verb_only(verb_predict, verb)
 
 
             if total_steps % print_freq == 0:
@@ -111,54 +96,35 @@ def train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler
                                utils.format_dict(top5_a,"{:.2f}","5-"), loss.item(),
                                train_loss / ((total_steps-1)%eval_frequency) ))
 
-
-            if total_steps % eval_frequency == 0:
-                top1, top5, val_loss = eval(model, dev_loader, encoder, gpu_mode)
-                model.train()
-
-                top1_avg = top1.get_average_results()
-                top5_avg = top5.get_average_results()
-
-                avg_score = top1_avg["verb"] + top1_avg["value"] + top1_avg["value-all"] + top5_avg["verb"] + \
-                            top5_avg["value"] + top5_avg["value-all"] + top5_avg["value*"] + top5_avg["value-all*"]
-                avg_score /= 8
-
-                print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
-                                                             utils.format_dict(top1_avg,'{:.2f}', '1-'),
-                                                             utils.format_dict(top5_avg, '{:.2f}', '5-')))
-                #print('Dev loss :', val_loss)
-
-                dev_score_list.append(avg_score)
-                max_score = max(dev_score_list)
-
-                if max_score == dev_score_list[-1]:
-                    torch.save(model.state_dict(), model_dir + "/{0}_small512.model".format(max_score))
-                    print ('New best model saved! {0}'.format(max_score))
-
-                #eval on the trainset
-
-                '''top1, top5, val_loss = eval(model, traindev_loader, encoder, gpu_mode)
-                model.train()
-
-                top1_avg = top1.get_average_results()
-                top5_avg = top5.get_average_results()
-
-                avg_score = top1_avg["verb"] + top1_avg["value"] + top1_avg["value-all"] + top5_avg["verb"] + \
-                            top5_avg["value"] + top5_avg["value-all"] + top5_avg["value*"] + top5_avg["value-all*"]
-                avg_score /= 8
-
-                print ('TRAINDEV {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
-                                                                  utils.format_dict(top1_avg,'{:.2f}', '1-'),
-                                                                  utils.format_dict(top5_avg, '{:.2f}', '5-')))'''
-
-                print('current train loss', train_loss)
-                train_loss = 0
-                top1 = imsitu_scorer(encoder, 1, 3)
-                top5 = imsitu_scorer(encoder, 5, 3)
-
-            del verb_predict, role_predict, loss, img, verb, roles, labels
+            del verb_predict, loss, img, verb, roles, labels
             #break
         print('Epoch ', epoch, ' completed!')
+
+        top1, top5, val_loss = eval(model, dev_loader, encoder, gpu_mode)
+        model.train()
+
+        top1_avg = top1.get_average_results()
+        top5_avg = top5.get_average_results()
+
+        avg_score = top1_avg["verb"] + top5_avg["verb"]
+        avg_score /= 8
+
+        print ('Dev {} average :{:.2f} {} {}'.format(total_steps-1, avg_score*100,
+                                                     utils.format_dict(top1_avg,'{:.2f}', '1-'),
+                                                     utils.format_dict(top5_avg, '{:.2f}', '5-')))
+
+        dev_score_list.append(avg_score)
+        max_score = max(dev_score_list)
+
+        if max_score == dev_score_list[-1]:
+            torch.save(model.state_dict(), model_dir + "/verbonly_vgg16.model")
+            print ('New best model saved! {0}'.format(max_score))
+
+        print('current train loss', train_loss)
+        train_loss = 0
+        top1 = imsitu_scorer(encoder, 1, 3)
+        top5 = imsitu_scorer(encoder, 5, 3)
+
         scheduler.step()
         #break
 
@@ -192,13 +158,13 @@ def eval(model, dev_loader, encoder, gpu_mode):
                 roles = torch.autograd.Variable(roles)
                 labels = torch.autograd.Variable(labels)
 
-            verb_predict, role_predict = model.forward_eval(img)
+            verb_predict = model(img)
             '''loss = model.calculate_eval_loss(verb_predict, verb, role_predict, labels)
             val_loss += loss.item()'''
-            top1.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
-            top5.add_point_eval_rolebeam(verb_predict, verb, role_predict, labels)
+            top1.add_point_verb_only(verb_predict, verb)
+            top5.add_point_verb_only(verb_predict, verb)
 
-            del verb_predict, role_predict, img, verb, roles, labels
+            del verb_predict, img, verb, roles, labels
             #break
 
     #return top1, top5, val_loss/mx
@@ -211,56 +177,66 @@ def main():
     parser = argparse.ArgumentParser(description="imsitu VSRL. Training, evaluation and prediction.")
     parser.add_argument("--gpuid", default=-1, help="put GPU id > -1 in GPU mode", type=int)
     parser.add_argument("--command", choices = ["train", "eval", "resume", 'predict'], required = True)
+    parser.add_argument("--batch_size", '-b', type=int, default=64)
     parser.add_argument("--weights_file", help="the model to start from")
 
     args = parser.parse_args()
 
-    batch_size = 640
-    #lr = 5e-6
-    lr = 0.0001
+    batch_size = args.batch_size
+    #lr = 1e-5
+    lr = 1e-4
     lr_max = 5e-4
     lr_gamma = 0.1
-    lr_step = 20
+    lr_step = 25
     clip_norm = 50
-    weight_decay = 1e-4
+    weight_decay = 1e-5
     n_epoch = 500
-    n_worker = 3
+    n_worker = 4
+
+    # print('LR scheme : lr decay, vgg, fc as per gnn paper batch 64', 1e-5, 0.1,25)
 
     dataset_folder = 'imSitu'
     imgset_folder = 'resized_256'
+    model_dir = 'trained_models'
 
     train_set = json.load(open(dataset_folder + "/train.json"))
     encoder = imsitu_encoder(train_set)
 
-    model = model_vsrl_small.RelationNetworks(encoder, args.gpuid)
+    model = model_verb_tuan.RelationNetworks(encoder, args.gpuid)
 
     train_set = imsitu_loader(imgset_folder, train_set, encoder, model.train_preprocess())
-
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=30, shuffle=True, num_workers=n_worker)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=n_worker)
 
     dev_set = json.load(open(dataset_folder +"/dev.json"))
     dev_set = imsitu_loader(imgset_folder, dev_set, encoder, model.dev_preprocess())
-    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=30, shuffle=True, num_workers=n_worker)
+    dev_loader = torch.utils.data.DataLoader(dev_set, batch_size=batch_size, shuffle=True, num_workers=n_worker)
 
     traindev_set = json.load(open(dataset_folder +"/dev.json"))
-    traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.dev_preprocess())
-    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=8, shuffle=True, num_workers=n_worker)
+    traindev_set = imsitu_loader(imgset_folder, traindev_set, encoder, model.train_preprocess())
+    traindev_loader = torch.utils.data.DataLoader(traindev_set, batch_size=batch_size, shuffle=True, num_workers=n_worker)
 
     if args.command == "resume":
         print ("loading model weights...")
         model.load_state_dict(torch.load(args.weights_file))
 
+    print(model)
     if args.gpuid >= 0:
-        #print('GPU enabled')
+        print('GPU enabled')
         model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam([{'params': model.conv.parameters(), 'lr': 5e-5},
+                                  {'params': model.verb.parameters()}],
+                                 lr=1e-3)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    '''optimizer = utils.CosineAnnealingWR(0.01,1200000 , 50,
+            torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))'''
+
     #gradient clipping, grad check
 
     print('Model training started!')
-    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, 'trained_models', encoder, args.gpuid, clip_norm, lr_max)
-
+    train(model, train_loader, dev_loader, traindev_loader, optimizer, scheduler, n_epoch, model_dir, encoder, args.gpuid, clip_norm, lr_max)
 
 
 if __name__ == "__main__":
